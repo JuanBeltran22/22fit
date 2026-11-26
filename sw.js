@@ -1,5 +1,5 @@
 // Service worker de 22Fit: la app abre sin internet y se actualiza sola cuando hay conexión.
-const VERSION = "rf-1795732188171";
+const VERSION = "rf-1795732224656";
 const FONTS = "rf-fonts";
 const CORE = [
   "./",
@@ -47,6 +47,16 @@ self.addEventListener("fetch", (e) => {
       fetch(req.url, { cache: "no-cache" })
         .then((res) => { const copy = res.clone(); caches.open(VERSION).then((c) => c.put("./index.html", copy)); return res; })
         .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
+  // Configuración (Firebase, Supabase): siempre la del servidor; sin internet, la copia guardada.
+  if (/-config\.js$/.test(url.pathname)) {
+    e.respondWith(
+      fetch(req.url, { cache: "no-cache" })
+        .then((res) => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); } return res; })
+        .catch(() => caches.match(req))
     );
     return;
   }
