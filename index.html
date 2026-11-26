@@ -315,6 +315,7 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 .me-card{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .me-pos{font-family:var(--display);font-size:32px;font-weight:600;color:var(--pos);min-width:62px}
 .me-emb{width:52px;height:52px;flex:0 0 auto}
+.av-top{--s:46px;margin:0 3px}
 .me-name{display:block;font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .me-card span{font-size:13px;color:var(--muted)}
 .lb{border-top:1px solid var(--line);margin-top:14px}
@@ -396,7 +397,7 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 
 /* Pestañas */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-.tabs-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+.tabs-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
 .tab{padding:10px 0 12px;display:grid;justify-items:center;gap:4px;font-size:10.5px;color:var(--muted);text-align:center;min-width:0}
 .tab svg{width:21px;height:21px}
 .tab[aria-selected="true"]{color:var(--fg)}
@@ -415,6 +416,41 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translate(-50%,-170%);z-index:50;background:var(--fg);color:#000;border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;transition:transform .35s;white-space:nowrap}
 .toast.show{transform:translate(-50%,0)}
+/* Perfil: avatar, nombre, guías plegables */
+.hdr-right{display:flex;align-items:center;gap:14px}
+.hdr-av{display:grid;place-items:center;padding:0;border-radius:50%}
+.av{--s:64px;width:var(--s);height:var(--s);border-radius:50%;display:grid;place-items:center;font-size:calc(var(--s)*.5);line-height:1;overflow:hidden;flex:0 0 auto;background:var(--surface);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.av.init{color:var(--accent);font-family:var(--display);font-weight:600;font-size:calc(var(--s)*.42)}
+.av-sm{--s:30px;box-shadow:0 0 0 1.5px var(--accent)}
+.av-lg{--s:76px}
+.me-prof{display:flex;align-items:center;gap:18px;margin-top:6px}
+.av-btn{position:relative;padding:0;border-radius:50%}
+.av-btn .av-edit{position:absolute;right:-2px;bottom:-2px;width:24px;height:24px;border-radius:50%;background:var(--fg);color:#000;display:grid;place-items:center;font-size:12px}
+.me-prof .who{min-width:0;flex:1}
+.me-prof .who b{display:block;font-family:var(--display);font-size:24px;font-weight:600;line-height:1.15;overflow-wrap:anywhere}
+.me-prof .who span{display:block;font-size:13px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.me-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.me-actions .ghost{margin-top:10px;padding:10px;font-size:14px}
+.name-form{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-top:16px}
+.name-form label{font-size:12px;color:var(--muted);display:grid;gap:6px}
+.name-form input{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line2);border-radius:8px;color:var(--fg);font:inherit;font-size:16px;padding:10px 12px}
+.name-form button{background:var(--fg);color:#000;font-weight:600;padding:11px 16px;border-radius:8px}
+.av-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;margin-top:18px}
+.av-grid button{display:grid;justify-items:center;gap:6px;padding:4px 0;font-size:11px;color:var(--muted);text-align:center}
+.av-grid .av{--s:58px;box-shadow:none}
+.av-grid button[aria-checked="true"] .av{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--pos)}
+.av-grid button[aria-checked="true"]{color:var(--pos)}
+.av-grid button:disabled .av{filter:grayscale(1) brightness(.45)}
+.av-grid button:disabled{cursor:default}
+.av-photo{display:grid;gap:0;margin-top:14px}
+.guide{border-bottom:1px solid var(--line)}
+.guide:first-of-type{border-top:1px solid var(--line)}
+.guide summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 0;font-weight:500}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::after{content:"+";color:var(--muted);font-size:20px;line-height:1}
+.guide[open] summary::after{content:"−"}
+.guide > .block,.guide > .tiers{margin-bottom:18px}
 /* Cuenta: entrar con Google o con correo para guardar el progreso */
 .acct{border:1px solid var(--line2);border-radius:12px;padding:16px}
 .acct h3,.acct-nudge h3{font-family:var(--display);font-size:18px;font-weight:600;margin:0}
@@ -553,7 +589,7 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
 <header class="appbar">
   <div class="appbar-in">
     <img class="brand-logo" src="brand/logo-22fit-v2.png" width="1093" height="300" alt="22Fit - Gym Tracker">
-    <button type="button" class="hdr-streak" id="hdrStreak" data-goto="racha" aria-label="Racha. Ver calendario"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.2 2.2c.5 3-1.1 4.8-2.6 6.5C9 10.4 7.4 12.2 7.4 15a4.6 4.6 0 0 0 9.2 0c0-2.4-1.2-3.9-2.1-5.2-.3 1.2-1 2.1-2 2.4.6-2.5.3-5.9.7-10z"/><path fill="#000" fill-opacity=".3" d="M12 20.2a2.6 2.6 0 0 1-2.6-2.6c0-1.5 1-2.3 1.6-3.1.2.9.8 1.5 1.5 1.8-.1-1 .2-2 .7-2.8.6.9 1.4 2.1 1.4 4.1a2.6 2.6 0 0 1-2.6 2.6z"/></svg><b class="num" id="hdrStreakN">0</b></button>
+    <div class="hdr-right"><button type="button" class="hdr-streak" id="hdrStreak" data-goto="racha" aria-label="Racha. Ver calendario"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.2 2.2c.5 3-1.1 4.8-2.6 6.5C9 10.4 7.4 12.2 7.4 15a4.6 4.6 0 0 0 9.2 0c0-2.4-1.2-3.9-2.1-5.2-.3 1.2-1 2.1-2 2.4.6-2.5.3-5.9.7-10z"/><path fill="#000" fill-opacity=".3" d="M12 20.2a2.6 2.6 0 0 1-2.6-2.6c0-1.5 1-2.3 1.6-3.1.2.9.8 1.5 1.5 1.8-.1-1 .2-2 .7-2.8.6.9 1.4 2.1 1.4 4.1a2.6 2.6 0 0 1-2.6 2.6z"/></svg><b class="num" id="hdrStreakN">0</b></button><button type="button" class="hdr-av" id="hdrAv" data-goto="brief" aria-label="Tu perfil"></button></div>
   </div>
 </header>
 <div class="wrap">
@@ -649,7 +685,18 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
   <section id="v-hist" class="view" hidden>
     <h2>Progreso de SR</h2>
     <div class="chart" id="srChart"></div>
-    <h2>Medidas</h2>
+    <h2>Partidas</h2>
+    <div class="matches" id="matches"></div>
+  </section>
+
+  <!-- PERFIL -->
+  <section id="v-brief" class="view" hidden>
+    <div id="meBox"></div>
+    <div id="acctSection" hidden>
+      <h2>Tu cuenta</h2>
+      <div id="acctBox"></div>
+    </div>
+    <h2>Peso y medidas</h2>
     <form class="form" id="mForm">
       <label for="mKg">Peso (kg)<input id="mKg" type="number" step="0.1" inputmode="decimal" placeholder="80.0"></label>
       <label for="mWaist">Cintura (cm)<input id="mWaist" type="number" step="0.5" inputmode="decimal" placeholder="En el ombligo"></label>
@@ -659,20 +706,11 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
     <p class="note" id="goalProgress" hidden></p>
     <div class="chart" id="mChart" style="margin-top:20px"></div>
     <div class="mlist" id="mList"></div>
-    <h2>Partidas</h2>
-    <div class="matches" id="matches"></div>
-  </section>
-
-  <!-- BRIEFING -->
-  <section id="v-brief" class="view" hidden>
-    <div id="acctSection" hidden>
-      <h2>Tu cuenta</h2>
-      <div id="acctBox"></div>
-    </div>
-    <h2>Tu perfil y objetivo</h2>
+    <h2>Tu objetivo</h2>
     <div id="profileBox"></div>
     <div class="block" id="goalBlock" style="margin-top:20px" hidden></div>
-    <h2>Nutrición diaria</h2>
+    <h2>Guías</h2>
+    <details class="guide"><summary>Nutrición diaria</summary>
     <div class="block">
       <div class="kpis" id="macros"></div>
       <p class="note" id="macroNote"></p>
@@ -683,8 +721,8 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
         <li><b>Cena:</b> 180 g de pescado, atún o carne, papa o plátano cocido y ensalada.</li>
       </ul>
       <p>Para el día a día quedan fuera las gaseosas, los jugos de caja, las frituras y la comida rápida. Los dulces y el mekato van con cupos.</p>
-    </div>
-    <h2>Mekato y dulces</h2>
+    </div></details>
+    <details class="guide"><summary>Mekato y dulces</summary>
     <div class="block">
       <h3>Sí puedes, con cupos</h3>
       <p>Un dulce de vez en cuando no daña el plan. Lo que lo daña es comer sin control, así que cada semana tienes cupos fijos.</p>
@@ -718,8 +756,8 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
         <tr><td>Lata de gaseosa normal (350 ml)</td><td>≈150 kcal</td></tr>
       </table>
       <p class="note">Calorías aproximadas. Un Chocoramo (casi 300 kcal), una porción de torta, una oblea con todo, un paquete grande de papas o un combo de comida rápida no caben en un cupo. Esos van en la comida libre.</p>
-    </div>
-    <h2>Puntos de SR</h2>
+    </div></details>
+    <details class="guide"><summary>Puntos de SR</summary>
     <div class="block">
       <table class="pts">
         <tr><td>Entrenamiento completado</td><td class="pos">+40</td></tr>
@@ -739,9 +777,9 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
         <tr><td>Día sin registrar (no te presentaste)</td><td class="neg">−60</td></tr>
       </table>
       <p class="note">Ganas el día si entrenas (o haces el descanso activo el fin de semana) y no te pasas con la comida. El mekato dentro del cupo y la comida libre no rompen la racha. Al subir de rango ganas 3 escudos, y cada uno evita una vez que bajes de ese rango.</p>
-    </div>
-    <h2>Rangos</h2>
-    <div class="tiers" id="tierGrid"></div>
+    </div></details>
+    <details class="guide"><summary>Rangos</summary>
+    <div class="tiers" id="tierGrid"></div></details>
     <h2>Copia de seguridad</h2>
     <p class="note" style="margin-top:0">Guarda tu progreso como un código para pasarlo a otro celular o a la app instalada.</p>
     <div class="backup">
@@ -764,10 +802,9 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
   <div class="tabs-in" role="tablist">
     <button class="tab" role="tab" data-v="lobby" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7.5 3.5v5.5c0 4.6-3.2 7.9-7.5 9.3-4.3-1.4-7.5-4.7-7.5-9.3V6.5z"/></svg>Lobby</button>
     <button class="tab" role="tab" data-v="top" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4v3h-4z"/></svg>Top</button>
-    <button class="tab" role="tab" data-v="racha" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c.6 3.4 4.8 5.4 4.8 10.1A4.8 4.8 0 0 1 7.2 13c0-2.3 1.2-3.9 2.4-4.9.2 1.7 1 2.9 2.3 3.4-.6-2.9-.4-5.8.1-8.5z"/></svg>Racha</button>
     <button class="tab" role="tab" data-v="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 7.5c-1.6-1.4-5.2-1.5-6.2 1.6-1.2 3.8 1.1 9.6 3.7 10.4 1 .3 1.6-.3 2.5-.3s1.5.6 2.5.3c2.6-.8 4.9-6.6 3.7-10.4-1-3.1-4.6-3-6.2-1.6zM12 7.5c0-2.1 1.1-3.6 3.2-4.2"/></svg>Comida</button>
     <button class="tab" role="tab" data-v="plan" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 9.5v5M6.5 6.5v11M17.5 6.5v11M21 9.5v5M6.5 12h11"/></svg>Plan</button>
-    <button class="tab" role="tab" data-v="brief" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.5h12v17H6zM9 8h6M9 12h6M9 16h4"/></svg>Briefing</button>
+    <button class="tab" role="tab" data-v="brief" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c1.2-3.8 4.1-5.6 7.5-5.6s6.3 1.8 7.5 5.6"/></svg>Perfil</button>
   </div>
 </nav>
 
@@ -793,6 +830,7 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
       <button type="button" role="tab" data-auth-mode="up" aria-selected="false">Crear cuenta</button>
     </div>
     <form class="auth-form" id="authForm" novalidate>
+      <label id="authNameWrap" hidden>Tu nombre (así sales en el top)<input id="authName" type="text" maxlength="20" autocomplete="nickname" placeholder="Ej. Juan"></label>
       <label>Correo<input id="authEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required></label>
       <label class="auth-pass">Contraseña<input id="authPass" type="password" autocomplete="current-password" minlength="6" required><button type="button" id="authShow" aria-label="Mostrar contraseña">Ver</button></label>
       <p class="auth-err" id="authErr" role="alert"></p>
@@ -800,6 +838,16 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
     </form>
     <p class="note auth-legal">Al entrar aceptas las <a href="privacidad.html#condiciones" target="_blank" rel="noopener">condiciones</a> y la <a href="privacidad.html" target="_blank" rel="noopener">privacidad</a> de 22Fit.</p>
     <button type="button" class="linkbtn" id="authClose">Cancelar</button>
+  </div>
+</div>
+<div class="sheet" id="avSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="avTitle">
+    <h3 id="avTitle">Elige tu avatar</h3>
+    <p class="note">Los que tienen candado se desbloquean al subir de rango.</p>
+    <div class="av-grid" id="avGrid" role="radiogroup" aria-label="Avatares"></div>
+    <div class="av-photo" id="avPhoto"></div>
+    <input type="file" id="avFile" accept="image/*" hidden>
+    <button type="button" class="linkbtn" id="avClose">Cerrar</button>
   </div>
 </div>
 <div class="sheet" id="pickSheet" hidden>
@@ -1160,7 +1208,8 @@ function acctOnAuth(ev, session){
 async function acctTagFor(id){
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("22fit:" + id)); acctTag = Array.from(new Uint8Array(h)).slice(0, 8).map(b=>b.toString(16).padStart(2, "0")).join(""); }
   catch(_) { acctTag = ""; }
-  schedulePush();
+  schedulePush(); topCache = null;
+  if (!$("v-top").hidden) openTop();
 }
 function hasProgress(s){ return !!s && ((s.sr|0) > 0 || Object.keys(s.logs || {}).length > 0); }
 async function acctPull(){
@@ -1183,6 +1232,7 @@ async function acctSync(){
       acctSetLink(uid); acctAdopt(remote, true);
     } else { acctAskPick(remote); return; }                                          // los dos tienen progreso: elige la persona
   } catch(e) { console.warn("Cuenta:", e && e.message || e); acctState = "err"; }
+  acctEnsureNick();
   renderAcct();
 }
 function acctAdopt(remote, loud){
@@ -1224,6 +1274,7 @@ function acctPick(which){
   acctSetLink(sbUser.id); acctState = "ok"; acctLast = Date.now();
   if (which === "remote") acctAdopt(remote, true);
   else { save(); acctPush(); toast("Tu cuenta quedó con el progreso de este celular"); }
+  acctEnsureNick();
   renderAcct();
 }
 async function acctGoogle(){
@@ -1237,6 +1288,16 @@ function renderAuthMode(){
   $("authTitle").textContent = authMode === "up" ? "Crea tu cuenta" : "Entra con tu correo";
   $("authGo").textContent = authMode === "up" ? "Crear cuenta" : "Entrar";
   $("authPass").setAttribute("autocomplete", authMode === "up" ? "new-password" : "current-password");
+  $("authNameWrap").hidden = authMode !== "up";
+}
+// El nombre del top sale de la cuenta: el de Google o el que la persona puso al crearla. Se cambia en Perfil.
+function acctEnsureNick(){
+  if (!sbUser || S.nick || S.topOff) return;
+  const md = sbUser.user_metadata || {};
+  let n = cleanNick(md.full_name || md.name || "");
+  if (n.length < 2) n = "Jugador" + Math.floor(1000 + Math.random()*9000);
+  S.nick = n; lastPushSig = ""; topCache = null; save(); render();
+  if (!$("v-top").hidden) openTop();
 }
 function openAuth(mode){ authMode = mode || "in"; renderAuthMode(); $("authErr").textContent = ""; $("authSheet").hidden = false; refocus("#authEmail"); }
 function closeAuth(){ $("authSheet").hidden = true; }
@@ -1253,13 +1314,15 @@ function authMsg(e){
 }
 async function authSubmit(){
   const email = $("authEmail").value.trim(), pass = $("authPass").value, err = $("authErr");
+  const name = cleanNick($("authName").value);
+  if (authMode === "up" && name.length < 2) { err.textContent = "Escribe tu nombre (mínimo 2 letras)."; return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = "Escribe un correo válido."; return; }
   if (pass.length < 6) { err.textContent = "La contraseña debe tener al menos 6 caracteres."; return; }
   const c = await sbInit(); if (!c) { err.textContent = "No pude conectar. Revisa tu internet."; return; }
   const up = authMode === "up";
   $("authGo").disabled = true; err.textContent = "";
   try {
-    const res = up ? await c.auth.signUp({ email, password: pass }) : await c.auth.signInWithPassword({ email, password: pass });
+    const res = up ? await c.auth.signUp({ email, password: pass, options: { data: { full_name: name } } }) : await c.auth.signInWithPassword({ email, password: pass });
     if (res.error) throw res.error;
     if (!res.data || !res.data.session) { err.textContent = "Revisa tu correo para confirmar la cuenta y luego entra."; return; }
     $("authPass").value = ""; closeAuth();
@@ -1295,16 +1358,110 @@ function renderAcctStatus(){
   el.classList.toggle("on", acctState === "ok"); el.lastElementChild.textContent = acctStatusText();
   setSync(!!sbUser && acctState === "ok");
 }
+function acctHow(){ return window.RF_SUPABASE && window.RF_SUPABASE.google ? "Entra con Google o con tu correo" : "Entra o crea una cuenta con tu correo"; }
+function acctButtons(){
+  const gOn = !!(window.RF_SUPABASE && window.RF_SUPABASE.google);   // el botón de Google sale solo si ese ingreso está activo en Supabase
+  return (gOn ? `<button type="button" class="gbtn" data-acct="google">${G_ICON}Continuar con Google</button>` : "") +
+    `<button type="button" class="${gOn ? "ghost" : "cta"}" data-acct="email"${gOn ? "" : ' style="margin-top:14px"'}>${gOn ? "Entrar o crear cuenta con correo" : "Entrar o crear cuenta"}</button>`;
+}
+
+/* ---------- Perfil: avatar y nombre ---------- */
+// [id, emoji, color claro, color oscuro, rango mínimo (índice de TIERS)]. Más adelante: avatares que cambian con el progreso.
+const AVATARS = [
+  ["fuego","🔥","#ff8a3d","#6b1d00",0], ["rayo","⚡","#f2b84b","#5a3a00",0], ["pesa","🏋️","#45d483","#0b4a2a",0], ["musculo","💪","#ff6b6b","#5a0f0f",0],
+  ["corredor","🏃","#3fd0c9","#0b3f3d",0], ["boxeo","🥊","#ff5c8a","#4a0b22",0], ["lobo","🐺","#9aa7b8","#1e2633",0], ["toro","🐂","#d98c5f","#3d1d0b",0],
+  ["leon","🦁","#f0c27a","#5a3510",2], ["aguila","🦅","#c49bff","#2d1857",3], ["tiburon","🦈","#4aa8ff","#0b2a4a",4], ["corona","👑","#f2d24b","#4a3b00",5]
+];
+let nameEdit = false;
+function googlePic(){ const md = sbUser && sbUser.user_metadata || {}; const p = md.avatar_url || md.picture || ""; return /^https:\/\//.test(p) ? p : ""; }
+function avatarHtml(cls){
+  const a = S.avatar || {};
+  if (a.k === "photo" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(a.data || "")) return `<span class="av ${cls}"><img src="${a.data}" alt=""></span>`;
+  if (a.k === "google" && googlePic()) return `<span class="av ${cls}"><img src="${esc(googlePic())}" alt="" referrerpolicy="no-referrer"></span>`;
+  const p = AVATARS.find(x=>x[0] === a.id);
+  if (a.k === "preset" && p) return `<span class="av ${cls}" style="background:linear-gradient(145deg,${p[2]},${p[3]})"><span aria-hidden="true">${p[1]}</span></span>`;
+  return `<span class="av init ${cls}">${esc((S.nick || "?").trim().charAt(0).toUpperCase() || "?")}</span>`;
+}
+function renderMe(){
+  const box = $("meBox"); if (!box) return;
+  const r = rankOf(S.sr), email = sbUser && sbUser.email;
+  $("hdrAv").innerHTML = avatarHtml("av-sm");
+  box.innerHTML = `<div class="me-prof">
+      <button type="button" class="av-btn" data-me="avatar" aria-label="Cambiar avatar">${avatarHtml("av-lg")}<span class="av-edit" aria-hidden="true">✎</span></button>
+      <div class="who"><b>${esc(S.nick || "Sin nombre")}</b><span>${r.label} · ${Math.round(S.sr).toLocaleString("es")} SR · racha ${S.streak|0}</span>${email ? `<span>${esc(email)}</span>` : ""}</div>
+    </div>` + (nameEdit
+    ? `<form class="name-form" id="nameForm"><label for="nameIn">Tu nombre (así sales en el top)<input id="nameIn" type="text" maxlength="20" autocomplete="nickname" value="${esc(S.nick || "")}" placeholder="Ej. Juan"></label><button type="submit">Guardar</button></form>
+       <button type="button" class="linkbtn" data-me="cancel">Cancelar</button>`
+    : `<div class="me-actions"><button type="button" class="ghost" data-me="avatar">Cambiar avatar</button><button type="button" class="ghost" data-me="name">${S.nick ? "Cambiar nombre" : "Ponte un nombre"}</button></div>`);
+}
+function openAvatars(){
+  const a = S.avatar || {}, myT = rankOf(S.sr).t;
+  $("avGrid").innerHTML = AVATARS.map(p=>{
+    const locked = myT < p[4] && !(a.k === "preset" && a.id === p[0]);
+    return `<button type="button" role="radio" aria-checked="${a.k === "preset" && a.id === p[0]}" data-av="${p[0]}"${locked ? " disabled" : ""}>
+      <span class="av" style="background:linear-gradient(145deg,${p[2]},${p[3]})"><span aria-hidden="true">${locked ? "🔒" : p[1]}</span></span>${locked ? "Desde " + TIERS[p[4]].name : "&nbsp;"}</button>`;
+  }).join("");
+  $("avPhoto").innerHTML = `<button type="button" class="ghost" data-av-act="upload">Usar una foto mía</button>` +
+    (googlePic() ? `<button type="button" class="ghost" data-av-act="google">Usar mi foto de Google</button>` : "") +
+    (a.k ? `<button type="button" class="linkbtn" data-av-act="none">Quitar avatar</button>` : "");
+  $("avSheet").hidden = false;
+}
+function setAvatar(v){ S.avatar = v; save(); renderMe(); $("avSheet").hidden = true; toast("Avatar actualizado"); }
+// Recorta la foto al centro en un cuadrado de 160 px (pesa unos 10 KB y viaja con tu progreso).
+function avatarFromFile(file){
+  return new Promise((res, rej)=>{
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = ()=>{ const s = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement("canvas"); c.width = c.height = 160;
+      c.getContext("2d").drawImage(img, (img.naturalWidth - s)/2, (img.naturalHeight - s)/2, s, s, 0, 0, 160, 160); URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg", 0.82)); };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); rej(new Error("imagen")); };
+    img.src = url;
+  });
+}
+function meAction(e){
+  const m = e.target.closest("[data-me]");
+  if (m) {
+    const a = m.dataset.me;
+    if (a === "avatar") openAvatars();
+    else if (a === "name") { nameEdit = true; renderMe(); refocus("#nameIn"); }
+    else if (a === "cancel") { nameEdit = false; renderMe(); }
+    return true;
+  }
+  const av = e.target.closest("[data-av]");
+  if (av && !av.disabled) { setAvatar({k: "preset", id: av.dataset.av}); return true; }
+  const act = e.target.closest("[data-av-act]");
+  if (act) {
+    const a = act.dataset.avAct;
+    if (a === "upload") $("avFile").click();
+    else if (a === "google") setAvatar({k: "google"});
+    else if (a === "none") setAvatar(null);
+    return true;
+  }
+  return false;
+}
+$("avFile").addEventListener("change", async e=>{
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  try { setAvatar({k: "photo", data: await avatarFromFile(f)}); } catch(_) { toast("No pude abrir esa imagen. Prueba con otra."); }
+});
+$("avClose").addEventListener("click", ()=>{ $("avSheet").hidden = true; });
+$("avSheet").addEventListener("click", e=>{ if (e.target.id === "avSheet") $("avSheet").hidden = true; });
+document.addEventListener("submit", e=>{
+  if (!e.target || e.target.id !== "nameForm") return;
+  e.preventDefault();
+  const n = cleanNick($("nameIn").value);
+  if (n.length < 2) { toast("El nombre debe tener al menos 2 letras o números"); return; }
+  S.nick = n; S.topOff = false; nameEdit = false; lastPushSig = ""; topCache = null; save(); render(); pushRank();
+  toast("Nombre guardado · así sales en el top");
+});
+
 function acctNudgeOff(){ try { return localStorage.getItem(KEY + ".acctNudge") === "off"; } catch(_) { return false; } }
 function renderAcct(){
   const on = acctEnabled(), box = $("acctBox"), nudge = $("acctNudge");
   $("acctSection").hidden = !on;
   if (!on) { nudge.innerHTML = ""; return; }
   setSync(!!sbUser && acctState === "ok");
-  const gOn = !!window.RF_SUPABASE.google;   // el botón de Google sale solo si ese ingreso está activo en Supabase
-  const how = gOn ? "Entra con Google o con tu correo" : "Entra o crea una cuenta con tu correo";
-  const buttons = (gOn ? `<button type="button" class="gbtn" data-acct="google">${G_ICON}Continuar con Google</button>` : "") +
-    `<button type="button" class="${gOn ? "ghost" : "cta"}" data-acct="email"${gOn ? "" : ' style="margin-top:14px"'}>${gOn ? "Entrar o crear cuenta con correo" : "Entrar o crear cuenta"}</button>`;
+  renderMe();
+  const how = acctHow(), buttons = acctButtons();
   if (sbUser) {
     const md = sbUser.user_metadata || {}, name = md.full_name || md.name || "", email = sbUser.email || "";
     const pic = /^https:\/\//.test(md.avatar_url || md.picture || "") ? (md.avatar_url || md.picture) : "";
@@ -1344,7 +1501,7 @@ function acctAction(a){
   }
   else if (a === "pick") { acctState = "sync"; renderAcct(); acctSync(); }
   else if (a === "retry") { acctState = "loading"; acctBoot(); }
-  else if (a === "later") { try { localStorage.setItem(KEY + ".acctNudge", "off"); } catch(_){} renderAcct(); toast("Puedes entrar cuando quieras desde Briefing"); }
+  else if (a === "later") { try { localStorage.setItem(KEY + ".acctNudge", "off"); } catch(_){} renderAcct(); toast("Puedes entrar cuando quieras desde Perfil"); }
 }
 async function acctBoot(){
   if (!acctEnabled()) { renderAcct(); return; }
@@ -1409,9 +1566,10 @@ function fbInit(){
 }
 function cleanNick(s){ return String(s || "").normalize("NFC").replace(/[^\p{L}\p{N} ._-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 20); }
 function rankSig(){ return [S.nick, Math.round(S.sr), rankOf(S.sr).label, S.streak|0, S.best|0, acctTag].join("|"); }
-function schedulePush(){ if (!topEnabled() || !S.nick) return; clearTimeout(pushTimer); pushTimer = setTimeout(pushRank, 1500); }
+function inTop(){ return !!S.nick && !S.topOff && (!acctEnabled() || !!(sbUser && acctTag)); }
+function schedulePush(){ if (!topEnabled() || !inTop()) return; clearTimeout(pushTimer); pushTimer = setTimeout(pushRank, 1500); }
 async function pushRank(){
-  if (!topEnabled() || !S.nick || rankSig() === lastPushSig) return true;
+  if (!topEnabled() || !inTop() || rankSig() === lastPushSig) return true;
   const f = await fbInit(); if (!f) return false;
   const sig = rankSig();
   try {
@@ -1431,7 +1589,7 @@ async function loadTop(){
     const snap = await fs.getDocs(fs.query(col, fs.orderBy("sr", "desc"), fs.limit(100)));
     const cutoff = Date.now() - 30*864e5;   // quien no abre la app en 30 días sale de la lista
     const tms = r=>r.updatedAt && r.updatedAt.toMillis ? r.updatedAt.toMillis() : 0;
-    const all = snap.docs.map(d=>Object.assign({id:d.id}, d.data())).filter(r=>tms(r) >= cutoff || r.id === f.uid);
+    const all = snap.docs.map(d=>Object.assign({id:d.id}, d.data())).filter(r=>(tms(r) >= cutoff && (!acctEnabled() || r.acct)) || (r.id === f.uid && inTop()));
     // Una fila por cuenta: si alguien entra con su cuenta en dos celulares, queda la de este celular o la más reciente.
     const best = new Map();
     all.forEach(r=>{ if (!r.acct) return; const cur = best.get(r.acct); if (!cur || r.id === f.uid || (cur.id !== f.uid && tms(r) > tms(cur))) best.set(r.acct, r); });
@@ -1440,8 +1598,8 @@ async function loadTop(){
     try { total = (await fs.getCountFromServer(col)).data().count; } catch(_){}
     const idx = rows.findIndex(r=>r.id === f.uid);
     if (idx >= 0) myPos = idx + 1;
-    else if (S.nick) { try { myPos = (await fs.getCountFromServer(fs.query(col, fs.where("sr", ">", Math.round(S.sr))))).data().count + 1; } catch(_){} }
-    topCache = {rows, total, myPos, at: Date.now(), uid: f.uid};
+    else if (inTop()) { try { myPos = (await fs.getCountFromServer(fs.query(col, fs.where("sr", ">", Math.round(S.sr))))).data().count + 1; } catch(_){} }
+    topCache = {rows, total: acctEnabled() ? rows.length : total, myPos, at: Date.now(), uid: f.uid};
   } catch(e) { console.warn("Top global:", e && e.code || e); topCache = {error:true}; }
   renderTop();
 }
@@ -1456,32 +1614,38 @@ function renderTop(){
           <p>Para competir con tus amigos, instala 22Fit desde su link. Ahí se juntan los puntos de todos.</p>
           <a class="cta" href="${PUBLIC_URL}" target="_blank" rel="noopener" style="text-decoration:none">Abrir la app pública</a>
           <p class="note" style="user-select:all;-webkit-user-select:all">${PUBLIC_URL}</p>
-          <p class="note">Para llevarte tu progreso, ve a Briefing → Copia de seguridad → Copiar mi código. En la app pública pega el código y toca Restaurar.</p></div>`;
+          <p class="note">Para llevarte tu progreso, ve a Perfil → Copia de seguridad → Copiar mi código. En la app pública pega el código y toca Restaurar.</p></div>`;
     return;
   }
-  if (!S.nick || topEdit) {
+  if ((!S.nick || topEdit) && !acctEnabled()) {   // sin cuentas (versión vieja): se pide un apodo aquí
     box.innerHTML = `<div class="block"><h3>${S.nick ? "Cambia tu apodo" : "Entra al top global"}</h3>
       <p class="note" style="margin-top:2px">En el top solo se ve tu apodo, tu rango, tus SR y tu racha. Tu peso y tus comidas se quedan en tu celular.</p>
       <form class="form" id="nickForm" style="grid-template-columns:1fr auto;margin-top:14px"><label for="nickIn">Apodo<input id="nickIn" type="text" maxlength="20" autocomplete="off" placeholder="Ej. JuanFit" value="${esc(S.nick || "")}"></label><button type="submit">${S.nick ? "Guardar" : "Entrar"}</button></form>
       ${S.nick ? `<button type="button" class="link" data-top="cancel">Cancelar</button>` : ""}</div>`;
     return;
   }
-  if (!topCache || topCache.loading) { box.innerHTML = `<div class="empty">Cargando el top…</div>`; return; }
-  if (topCache.error) { box.innerHTML = `<div class="empty">No pude cargar el top. Revisa tu conexión.<br><button type="button" class="link" data-top="refresh">Intentar otra vez</button></div>`; return; }
-  const me = rankOf(S.sr); const rows = topCache.rows || [];
-  box.innerHTML = `
-    <div class="me-card"><div class="me-pos num">${topCache.myPos ? "#" + topCache.myPos : "—"}</div>${emblem(me.t, me.d, "me-emb")}
-      <div style="min-width:0;flex:1"><b class="me-name">${esc(S.nick)}</b><span>${me.label} · ${Math.round(S.sr).toLocaleString("es")} SR</span></div></div>
+  const me = rankOf(S.sr);
+  // Con nombre: tu fila. Sin sesión: invitación a entrar (el nombre sale de la cuenta, no se pide aquí).
+  const head = inTop()
+    ? `<div class="me-card"><div class="me-pos num">${topCache && topCache.myPos ? "#" + topCache.myPos : "—"}</div>${avatarHtml("av-top")}
+      <div style="min-width:0;flex:1"><b class="me-name">${esc(S.nick)}</b><span>${me.label} · ${Math.round(S.sr).toLocaleString("es")} SR</span></div></div>`
+    : `<div class="setup acct-nudge" style="margin-bottom:18px"><h3>Entra para aparecer en el top</h3>
+      <p class="note" style="margin-top:2px">${acctHow()} y sales aquí con tu nombre, tu rango y tus SR.</p>${acctButtons()}</div>`;
+  const headFinal = sbUser && !inTop() ? (S.topOff ? `<div class="setup acct-nudge" style="margin-bottom:18px"><h3>Saliste del top</h3><p class="note" style="margin-top:2px">Para volver, ponte un nombre en Perfil.</p><button type="button" class="cta" data-goto="brief">Ir a Perfil</button></div>` : `<div class="empty" style="margin-bottom:18px">Preparando tu fila del top…</div>`) : head;
+  if (!topCache || topCache.loading) { box.innerHTML = headFinal + `<div class="empty">Cargando el top…</div>`; return; }
+  if (topCache.error) { box.innerHTML = headFinal + `<div class="empty">No pude cargar el top. Revisa tu conexión.<br><button type="button" class="link" data-top="refresh">Intentar otra vez</button></div>`; return; }
+  const rows = topCache.rows || [];
+  box.innerHTML = headFinal + `
     <p class="note">${topCache.total != null ? topCache.total + (topCache.total === 1 ? " jugador" : " jugadores") + " en la temporada · " : ""}actualizado ${timeAgo(topCache.at)}</p>
     <div class="lb">${rows.length ? rows.map((r,i)=>{
       const sr = Math.max(0, Math.round(Number(r.sr) || 0)); const rk = rankOf(sr); const mine = r.id === topCache.uid;
       return `<div class="lb-row${i < 3 ? " top" + (i+1) : ""}${mine ? " me" : ""}"><span class="p num">${i+1}</span>${emblem(rk.t, rk.d, "e")}<span class="n"><b>${esc(String(r.name || "Jugador").slice(0,20))}${mine ? " · tú" : ""}</b><small>${rk.label} · racha ${Math.max(0, Math.round(Number(r.streak) || 0))}</small></span><span class="s num">${sr.toLocaleString("es")}<small>SR</small></span></div>`;
     }).join("") : `<div class="empty" style="margin-top:14px">Todavía no hay nadie en el top. Sé el primero.</div>`}</div>
-    <div class="top-actions"><button type="button" class="ghost" data-top="refresh">Actualizar</button><button type="button" class="link" data-top="nick">Cambiar apodo</button><button type="button" class="link" data-top="leave">Salir del top</button></div>`;
+    <div class="top-actions"><button type="button" class="ghost" data-top="refresh">Actualizar</button>${inTop() ? `<button type="button" class="link" data-goto="brief">Cambiar nombre</button><button type="button" class="link" data-top="leave">Salir del top</button>` : ""}</div>`;
 }
 function openTop(){
   renderTop();
-  if (topEnabled() && S.nick && !topEdit && (!topCache || topCache.error || Date.now() - (topCache.at || 0) > 60000)) loadTop();
+  if (topEnabled() && (S.nick || acctEnabled()) && !topEdit && (!topCache || topCache.error || Date.now() - (topCache.at || 0) > 60000)) loadTop();
 }
 async function topAction(a, el){
   if (a === "refresh") { await pushRank(); loadTop(); return; }
@@ -1492,7 +1656,8 @@ async function topAction(a, el){
     clearTimeout(leaveT); leaveArmed = false;
     const f = await fbInit();
     if (f) { try { await f.fs.deleteDoc(f.fs.doc(f.db, "players", f.uid)); } catch(_){} }
-    S.nick = null; lastPushSig = ""; topCache = null; save(); renderTop(); toast("Saliste del top");
+    if (acctEnabled()) S.topOff = true; else S.nick = null;
+    lastPushSig = ""; topCache = null; save(); render(); openTop(); toast("Saliste del top");
   }
 }
 
@@ -2254,7 +2419,7 @@ function renderHeader(){
   el.setAttribute("aria-label", `Racha de ${n} ${n === 1 ? "día" : "días"}. Ver calendario`);
 }
 
-function render(){ applyAccent(); renderHeader(); renderAcct(); renderSetup(); renderRank(); renderWeek(); renderMission(); renderStreak(); renderPlan(); renderHist(); renderBrief(); renderFood(); }
+function render(){ applyAccent(); renderHeader(); renderMe(); renderAcct(); renderSetup(); renderRank(); renderWeek(); renderMission(); renderStreak(); renderPlan(); renderHist(); renderBrief(); renderFood(); }
 
 /* ---------- Avisos ---------- */
 let toastT;
@@ -2310,6 +2475,7 @@ document.addEventListener("click", e=>{
   if (am) { authMode = am.dataset.authMode; renderAuthMode(); $("authErr").textContent = ""; return; }
   const pk = e.target.closest("[data-pick]");
   if (pk) { acctPick(pk.dataset.pick); return; }
+  if (meAction(e)) return;
   if (profileAction(e)) return;
   if (planAction(e)) return;
   const tp = e.target.closest("[data-top]");
@@ -2534,7 +2700,6 @@ function boot(){
   evs.forEach(announce);
   if (evs.length) toast(evs.length === 1 ? "1 día sin cerrar procesado" : evs.length + " días sin cerrar procesados");
 }
-try { let tb = localStorage.getItem(KEY + ".tab"); if (tb === "hist") tb = "racha"; if (tb && document.querySelector(`.tab[data-v="${tb}"]`)) selectTab(tb); } catch(_){}
 boot();
 acctBoot();
 
