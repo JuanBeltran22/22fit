@@ -565,7 +565,7 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
         <tr><td>Comida limpia</td><td class="pos">+10</td></tr>
         <tr><td>Mekato dentro del cupo</td><td class="pos">+5</td></tr>
         <tr><td>Comida libre (1 por semana)</td><td>0</td></tr>
-        <tr><td>20 min de cardio</td><td class="pos">+10</td></tr>
+        <tr><td>1.000 pasos</td><td class="pos">+10</td></tr>
         <tr><td>3 litros de agua</td><td class="pos">+5</td></tr>
         <tr><td>Dormir 7 horas o más</td><td class="pos">+5</td></tr>
         <tr><td>Partida perfecta (todo cumplido)</td><td class="pos">+10</td></tr>
@@ -764,7 +764,7 @@ function kcalGoal(){ return Math.round(latestKg()*28/50)*50; }
 
 const ITEMS = [
   {k:"prot",  t:()=>"Proteína "+proteinGoal()+" g", s:"Huevos, pollo, carne, atún, yogur griego", pos:10, neg:-5},
-  {k:"steps", t:()=>"20 min de cardio", s:"Caminata inclinada, bici, elíptica o trotar. El del gym cuenta", pos:10},
+  {k:"steps", t:()=>"1.000 pasos", s:"Unos 10 minutos caminando. La caminata del gym cuenta", pos:10},
   {k:"water", t:()=>"3 litros de agua", s:"Una botella de 1 L, llénala 3 veces", pos:5},
   {k:"sleep", t:()=>"Dormí 7 horas o más", s:"El músculo crece mientras duermes", pos:5}
 ];
@@ -806,7 +806,7 @@ function scoreDay(date, d){
   L.push(d.prot ? ["Proteína cumplida", 10] : ["Proteína baja", -5]);
   const ef = effFood(date, d);
   L.push(ef.why ? [ef.why, -20] : FOOD_LINE[ef.f].slice());
-  if (d.steps) L.push(["20 min de cardio", 10]);
+  if (d.steps) L.push(["1.000 pasos", 10]);
   if (d.water) L.push(["3 L de agua", 5]);
   if (d.sleep) L.push(["Sueño de 7 h", 5]);
   const okFood = ef.f === "limpio" || ef.f === "cupo";
@@ -1148,7 +1148,7 @@ function fixEditor(k){
       ${row("w", rest ? "Descanso activo cumplido" : "Entrenamiento completado", rest ? "" : "Con el cardio del día")}
       ${row("prot", "Proteína " + proteinGoal() + " g")}
       <li class="food"><div class="food-h"><b>Comida</b></div><div class="seg" role="radiogroup" aria-label="Comida de ese día">${opts.map(o=>`<button type="button" role="radio" aria-checked="${sel === o[0]}" data-fixfood="${o[0]}"${o[0] === "pase" ? ' class="bad"' : ""}>${o[1]}</button>`).join("")}</div></li>
-      ${row("steps", "20 min de cardio")}
+      ${row("steps", "1.000 pasos")}
       ${row("water", "3 litros de agua")}
       ${row("sleep", "Dormí 7 horas o más")}
     </ul>
