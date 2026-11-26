@@ -8,3 +8,5 @@ window.RF_FIREBASE = {
   messagingSenderId: "266237721082",
   appId: "1:266237721082:web:404dd89153a974596e8c43"
 };
+// Clave de sitio de reCAPTCHA Enterprise para App Check (pública; protege el uso de Gemini al escanear etiquetas).
+window.RF_APPCHECK_KEY = "6Lfh0DMuAAAAAELhFO_AVDJoxKkZvsI9bDi5HKnR";
