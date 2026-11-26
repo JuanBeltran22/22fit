@@ -1,4 +1,4 @@
-// Configuración web de Firebase para el top global de Ranked Fit.
+// Configuración web de Firebase para el top global de 22Fit.
 // No es secreta: Firebase la pone en el navegador por diseño. Los datos los protegen las reglas de firestore.rules.
 window.RF_FIREBASE = {
   apiKey: "AIzaSyCcGH3DL_mG_pU-giBDPACOyKDD3HWwHWQ",

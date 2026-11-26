@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ranked Fit</title>
+<title>22Fit</title>
 <meta name="description" content="Entrena, come bien y sube de rango: de Bronce a Top 250.">
 <meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Ranked Fit">
+<meta name="apple-mobile-web-app-title" content="22Fit">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -18,7 +18,7 @@
 <script src="firebase-config.js"></script>
 </head>
 <body>
-<title>Ranked Fit</title>
+<title>22Fit</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -348,7 +348,7 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 
 <div class="wrap">
   <header class="top">
-    <div class="brand">Ranked Fit <span>· Temporada 1</span></div>
+    <div class="brand">22Fit <span>· Temporada 1</span></div>
     <div class="top-r"><button type="button" class="install" id="installBtn" hidden>Instalar</button><div class="sync" id="sync"><i></i><span>En este dispositivo</span></div></div>
   </header>
 
@@ -828,7 +828,7 @@ async function pushRemote(){
 function setSync(on){ const el = $("sync"); el.classList.toggle("on", on); el.lastElementChild.textContent = on ? "Guardado en la nube" : "En este dispositivo"; }
 
 /* ---------- Top global (Firebase; solo en la app pública con firebase-config.js) ---------- */
-const PUBLIC_URL = "https://juanbeltran22.github.io/ranked-fit/";
+const PUBLIC_URL = "https://juanbeltran22.github.io/22fit/";
 const FB_VER = "10.12.2";
 let fb = null, fbLoading = null, topCache = null, topEdit = false, pushTimer = null, lastPushSig = "", leaveArmed = false, leaveT = null;
 function topEnabled(){ return !!(window.RF_FIREBASE && window.RF_FIREBASE.projectId); }
@@ -893,7 +893,7 @@ function renderTop(){
     box.innerHTML = onPublic
       ? `<div class="empty">El top global se está configurando. Vuelve en un rato.</div>`
       : `<div class="block"><h3>El top global está en la app pública</h3>
-          <p>Para competir con tus amigos, instala Ranked Fit desde su link. Ahí se juntan los puntos de todos.</p>
+          <p>Para competir con tus amigos, instala 22Fit desde su link. Ahí se juntan los puntos de todos.</p>
           <a class="cta" href="${PUBLIC_URL}" target="_blank" rel="noopener" style="text-decoration:none">Abrir la app pública</a>
           <p class="note" style="user-select:all;-webkit-user-select:all">${PUBLIC_URL}</p>
           <p class="note">Para llevarte tu progreso, ve a Briefing → Copia de seguridad → Copiar mi código. En la app pública pega el código y toca Restaurar.</p></div>`;
