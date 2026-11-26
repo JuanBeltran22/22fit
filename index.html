@@ -587,6 +587,10 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
       <button type="button" class="ghost" id="importBtn">Restaurar desde el código</button>
     </div>
     <h2>Ajustes</h2>
+    <div id="updateBox" hidden>
+      <p class="note" style="margin-top:0">La app se actualiza sola al abrirla con internet. Si quieres ver ya los últimos cambios, toca aquí.</p>
+      <button class="ghost" id="updateBtn" type="button" style="margin-bottom:22px">Buscar actualización</button>
+    </div>
     <p class="note" style="margin-top:0">Reinicia la temporada desde Bronce I. Se borra todo el historial.</p>
     <button class="danger" id="resetBtn" type="button">Reiniciar temporada</button>
   </section>
@@ -1826,6 +1830,16 @@ $("mForm").addEventListener("submit", e=>{
 });
 
 let resetArmed = false, resetT;
+// Buscar actualización (solo en la app instalable, que es la que guarda copias para funcionar sin internet).
+if (!window.claude && "serviceWorker" in navigator) {
+  $("updateBox").hidden = false;
+  $("updateBtn").addEventListener("click", async ()=>{
+    toast("Buscando la versión más reciente…");
+    try { const r = await navigator.serviceWorker.getRegistration(); if (r) await r.update(); } catch(_){}
+    setTimeout(()=>location.reload(), 800);
+  });
+}
+
 $("resetBtn").addEventListener("click", ()=>{
   if (!resetArmed) { resetArmed = true; $("resetBtn").textContent = "Toca otra vez para borrar todo"; resetT = setTimeout(()=>{ resetArmed = false; $("resetBtn").textContent = "Reiniciar temporada"; }, 4000); return; }
   clearTimeout(resetT); resetArmed = false; $("resetBtn").textContent = "Reiniciar temporada";
@@ -1975,7 +1989,17 @@ document.addEventListener("visibilitychange", ()=>{ if (!document.hidden) dayChe
 
 <script>
 if ("serviceWorker" in navigator) {
+  // Cuando hay una versión nueva, la app se recarga sola una vez.
+  var rfHadSW = !!navigator.serviceWorker.controller, rfReloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", function () {
+    if (rfHadSW && !rfReloading) { rfReloading = true; location.reload(); }
+    rfHadSW = true;
+  });
   addEventListener("load", function () { navigator.serviceWorker.register("./sw.js").catch(function () {}); });
+  // Al volver a la app (por ejemplo en iPhone, donde no se recarga sola), revisa si hay versión nueva.
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) navigator.serviceWorker.getRegistration().then(function (r) { if (r) r.update(); }).catch(function () {});
+  });
 }
 </script>
 </body>

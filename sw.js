@@ -1,5 +1,5 @@
 // Service worker de 22Fit: la app abre sin internet y se actualiza sola cuando hay conexión.
-const VERSION = "rf-1795713780991";
+const VERSION = "rf-1795713890888";
 const FONTS = "rf-fonts";
 const CORE = [
   "./",
@@ -39,10 +39,10 @@ self.addEventListener("fetch", (e) => {
 
   if (url.origin !== self.location.origin) return;
 
-  // La página: primero la red (para recibir cambios), y sin internet la copia guardada.
+  // La página: siempre se pregunta al servidor por la versión nueva; sin internet, la copia guardada.
   if (req.mode === "navigate") {
     e.respondWith(
-      fetch(req)
+      fetch(req.url, { cache: "no-cache" })
         .then((res) => { const copy = res.clone(); caches.open(VERSION).then((c) => c.put("./index.html", copy)); return res; })
         .catch(() => caches.match("./index.html"))
     );
