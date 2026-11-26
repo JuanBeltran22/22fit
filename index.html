@@ -1,0 +1,1712 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ranked Fit</title>
+<meta name="description" content="Entrena, come bien y sube de rango: de Bronce a Top 250.">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ranked Fit">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Ranked Fit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: una sola columna sobre negro puro. Líneas finas en vez de tarjetas, el color del rango como único acento, pestañas fijas abajo. Tema oscuro único, a propósito. */
+:root{
+  color-scheme: dark;
+  --bg:#000000;
+  --surface:#0d0d0d;
+  --line:#1c1c1c;
+  --line2:#2e2e2e;
+  --fg:#f2f2f2;
+  --fg2:#c8c8c8;
+  --muted:#808080;
+  --faint:#3d3d3d;
+  --accent:#f0b27a;   /* cambia con el rango */
+  --accent-dim:color-mix(in srgb, var(--accent) 26%, transparent);
+  --pos:#45d483;      /* verde de victorias */
+  --pos-dim:color-mix(in srgb, var(--pos) 28%, transparent);
+  --warn:#f2b84b;
+  --neg:#ff5c5c;
+  --display:"Chakra Petch", "Rajdhani", "Segoe UI", system-ui, sans-serif;
+  --body:"Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.wrap{max-width:520px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:6px calc(96px + env(safe-area-inset-bottom,0px))}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px 22px}
+.brand{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.02em}
+.brand span{color:var(--muted);font-weight:500}
+.sync{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px}
+.sync i{width:6px;height:6px;border-radius:50%;background:var(--faint)}
+.sync.on i{background:var(--pos)}
+h2{font-family:var(--body);font-size:11.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:36px 0 14px}
+.view > h2:first-child{margin-top:4px}
+.h-split{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.h-split button{font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--accent)}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0;max-width:62ch}
+.sub{font-size:12px;color:var(--muted);margin:26px 0 0}
+
+/* Rango */
+.rank-row{display:flex;align-items:center;gap:18px}
+.emblem{flex:0 0 auto;width:88px;height:88px;filter:drop-shadow(0 4px 16px var(--accent-dim))}
+.rank-name{font-family:var(--display);font-weight:600;font-size:28px;line-height:1.05;color:var(--accent)}
+.rank-sr{font-family:var(--display);font-size:16px;font-weight:500;margin-top:6px}
+.rank-next{font-size:13px;color:var(--muted);margin-top:2px}
+.bar{height:3px;background:var(--line);margin-top:22px;border-radius:2px;overflow:hidden}
+.bar>span{display:block;height:100%;background:var(--accent);transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stat{padding:12px 0}
+.stat + .stat{padding-left:14px;border-left:1px solid var(--line)}
+.stat b{display:block;font-family:var(--display);font-size:22px;font-weight:600;line-height:1.15}
+.stat span{font-size:12px;color:var(--muted)}
+
+/* Semana */
+.week{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+.wd{display:grid;justify-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.wd i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--faint)}
+.wd.win i{background:var(--pos);border-color:var(--pos)}
+.wd.loss i{background:var(--neg);border-color:var(--neg)}
+.wd.today{color:var(--fg)}
+.wd.today i{border-color:var(--fg)}
+.wd b{font-family:var(--display);font-weight:500;font-size:12px;min-height:1.3em}
+.wd{width:100%;padding:2px 0}
+.wd.win b{color:var(--pos)} .wd.loss b{color:var(--neg)}
+.fixhint{display:block;width:100%;text-align:center;margin-top:16px;font-size:13px;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+
+/* Misión */
+.m-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.m-type{font-size:12px;color:var(--accent);font-weight:500}
+.m-title{font-family:var(--display);font-size:23px;font-weight:600;line-height:1.15;margin-top:3px}
+.m-tag{font-size:13px;color:var(--muted);margin-top:3px}
+.pot{text-align:right;font-size:11.5px;color:var(--muted);white-space:nowrap}
+.pot b{display:block;font-family:var(--display);font-size:24px;font-weight:600;color:var(--fg);line-height:1.2}
+.pot b.neg{color:var(--neg)} .pot b.pos{color:var(--pos)}
+.list{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid var(--line)}
+.list > li{border-bottom:1px solid var(--line)}
+.row{position:relative;display:flex;gap:14px;align-items:flex-start;padding:13px 0;width:100%;cursor:pointer}
+.sr{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.tick{flex:0 0 auto;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line2);margin-top:1px;display:grid;place-items:center;transition:background .15s,border-color .15s}
+.tick::after{content:"";width:8px;height:4.5px;border:2px solid #000;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px);opacity:0}
+.row[aria-pressed="true"] .tick,.row input:checked + .tick{background:var(--pos);border-color:var(--pos)}
+.row[aria-pressed="true"] .tick::after,.row input:checked + .tick::after{opacity:1}
+.row input:focus-visible + .tick{outline:2px solid var(--accent);outline-offset:2px}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:500}
+.row .t b em{font-style:normal;font-family:var(--display);font-weight:500;font-size:13px;color:var(--accent);margin-left:6px;white-space:nowrap}
+.row .t small{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.row input:checked ~ .t b{color:var(--muted);text-decoration:line-through}
+.row .v{font-family:var(--display);font-size:14px;color:var(--muted);white-space:nowrap}
+.row[aria-pressed="true"] .v{color:var(--pos)}
+.food{padding:14px 0}
+.food-h{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+.food-h b{font-weight:500}
+.food-h > span{font-size:12.5px;color:var(--muted)}
+.pips{display:inline-flex;gap:4px;margin:0 6px 0 4px}
+.pips i{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--accent)}
+.pips i.on{background:var(--accent)}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.seg button{border:1px solid var(--line2);border-radius:8px;padding:9px 4px;display:grid;gap:2px;justify-items:center;text-align:center;font-size:13px;font-weight:500;line-height:1.2;min-width:0}
+.seg button small{font-size:11px;font-weight:400;color:var(--muted)}
+.seg button[aria-checked="true"]{border-color:var(--accent);color:var(--accent)}
+.seg button.bad[aria-checked="true"]{border-color:var(--neg);color:var(--neg)}
+@media (max-width:400px){.seg{grid-template-columns:repeat(2,1fr)}}
+.cta{display:block;width:100%;background:var(--accent);color:#000;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.03em;padding:15px;border-radius:10px;margin-top:22px;text-align:center}
+.cta:active{transform:translateY(1px)}
+.closed{display:flex;gap:16px;align-items:center;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.closed .big{font-family:var(--display);font-size:32px;font-weight:600}
+
+/* Racha y calendario */
+.streak-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.streak-hero .big{font-family:var(--display);font-size:68px;font-weight:600;line-height:.95;color:var(--pos)}
+.streak-hero .big small{font-family:var(--body);font-size:15px;font-weight:500;color:var(--muted);margin-left:10px}
+.streak-hero .side{text-align:right;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.streak-hero .side b{display:block;font-family:var(--display);font-size:22px;font-weight:600;color:var(--fg)}
+.miles{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.mile{border:1px solid var(--line);border-radius:8px;padding:8px 0 6px;text-align:center;font-family:var(--display);font-size:16px;font-weight:600;color:var(--faint);line-height:1.1}
+.mile small{display:block;font-family:var(--body);font-size:10.5px;font-weight:400;color:var(--faint);margin-top:2px}
+.mile.on{border-color:var(--pos-dim);color:var(--pos)}
+.mile.on small{color:var(--muted)}
+.mile.live{border-color:var(--pos)}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin:34px 0 14px}
+.cal-nav b{font-family:var(--display);font-weight:600;font-size:18px}
+.cal-nav button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center}
+.cal-nav button svg{width:16px;height:16px}
+.cal-nav button:disabled{opacity:.25;cursor:default}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);row-gap:6px}
+.cal .h{font-size:11.5px;color:var(--muted);text-align:center;padding-bottom:6px}
+.c{position:relative;height:42px;display:grid;place-items:center}
+.c .n{position:relative;z-index:1;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:14px;font-weight:500;color:var(--fg2)}
+.c.out .n{color:var(--faint)}
+.c.fut .n{color:var(--muted)}
+.c.w .n{background:var(--pos);color:#000;font-weight:600}
+.c.l .n{color:var(--neg)}
+.c.l .n::after{content:"";position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--neg)}
+.c.t .n{box-shadow:inset 0 0 0 1.5px var(--fg)}
+.c.w.t .n{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--fg)}
+.c.sel .n{outline:1.5px solid var(--accent);outline-offset:3px}
+.c.jl::before,.c.jr::after{content:"";position:absolute;top:50%;height:34px;transform:translateY(-50%);background:var(--pos-dim)}
+.c.jl::before{left:0;right:50%}
+.c.jr::after{left:50%;right:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:14px}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.cal-stats{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:16px}
+.cal-stats b{font-family:var(--display);font-size:16px;font-weight:600;color:var(--fg);margin-right:4px}
+.cal-detail{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;padding:13px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cal-detail div b{display:block;font-weight:500}
+.cal-detail div span{display:block;font-size:12.5px;color:var(--muted)}
+.cal-detail > b{font-family:var(--display);font-size:17px;font-weight:600;white-space:nowrap}
+.year{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 14px}
+.mini{display:grid;gap:7px;align-content:start;min-width:0;border-radius:6px}
+.mini b{font-size:12.5px;font-weight:500;color:var(--fg2)}
+.mini.cur b{color:var(--accent)}
+.mini .g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.mini .g i{display:block;aspect-ratio:1;max-width:100%;border-radius:50%;background:var(--line)}
+.mini .g i.x{background:transparent}
+.mini .g i.w{background:var(--pos)}
+.mini .g i.l{background:var(--neg)}
+.mini .g i.t{box-shadow:0 0 0 1.5px var(--fg)}
+.mini small{font-size:11px;color:var(--muted)}
+
+/* Plan */
+.plan{border-top:1px solid var(--line)}
+.day{border-bottom:1px solid var(--line)}
+.day summary{list-style:none;cursor:pointer;padding:14px 0;display:flex;gap:14px;align-items:center}
+.day summary::-webkit-details-marker{display:none}
+.day .dname{font-family:var(--display);font-weight:500;width:34px;color:var(--muted);font-size:13px}
+.day.is-today .dname{color:var(--accent)}
+.day .dt{flex:1;min-width:0}
+.day .dt b{display:block;font-weight:500}
+.day .dt span{font-size:12.5px;color:var(--muted)}
+.chev{width:16px;height:16px;color:var(--muted);transition:transform .2s;flex:0 0 auto}
+.day[open] .chev{transform:rotate(180deg)}
+.day ol{margin:0;padding:0 0 18px 48px;display:grid;gap:10px;font-size:14px}
+.day ol li em{font-style:normal;font-family:var(--display);font-size:13px;color:var(--accent);margin-left:6px}
+.day ol li small{display:block;font-size:12.5px;color:var(--muted)}
+
+/* Historial */
+.chart svg{width:100%;height:auto;display:block}
+.chart .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
+.form{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+.form label{font-size:12px;color:var(--muted);display:grid;gap:6px}
+.form input{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line2);border-radius:8px;color:var(--fg);font:inherit;font-size:16px;padding:10px 12px}
+.form button{background:var(--fg);color:#000;font-weight:600;padding:11px 16px;border-radius:8px}
+.mlist{margin-top:14px;font-size:13.5px}
+.mlist div{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);color:var(--fg2)}
+.matches{border-top:1px solid var(--line)}
+.match{border-bottom:1px solid var(--line)}
+.match summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 0}
+.match summary::-webkit-details-marker{display:none}
+.match .res{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.match.win .res{background:var(--pos)}
+.match.loss .res{background:var(--neg)}
+.match .md{flex:1;min-width:0;font-size:12.5px;color:var(--muted)}
+.match .md b{display:block;font-size:14px;font-weight:500;color:var(--fg)}
+.match .dl{font-family:var(--display);font-size:16px;font-weight:600}
+.match ul{list-style:none;margin:0;padding:0 0 12px 20px;font-size:13px}
+.match ul li{display:flex;justify-content:space-between;gap:8px;padding:2px 0;color:var(--fg2)}
+.empty{border:1px dashed var(--line2);border-radius:10px;padding:18px;color:var(--muted);text-align:center;font-size:14px}
+
+/* Briefing */
+.block h3{font-family:var(--display);font-size:18px;font-weight:600;margin:0 0 6px}
+.block p{margin:8px 0;color:var(--fg2);max-width:62ch}
+.block ul{margin:10px 0;padding-left:18px;color:var(--fg2)}
+.block li{margin:6px 0}
+.block li b{color:var(--fg);font-weight:500}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:14px 0}
+.kpis div{padding:11px 0;min-width:0}
+.kpis div + div{padding-left:10px;border-left:1px solid var(--line)}
+.kpis b{display:block;font-family:var(--display);font-size:20px;font-weight:600}
+.kpis span{font-size:11.5px;color:var(--muted)}
+table.pts{width:100%;border-collapse:collapse;font-size:14px}
+table.pts td{padding:9px 0;border-bottom:1px solid var(--line);color:var(--fg2)}
+table.pts td:last-child{text-align:right;font-family:var(--display);font-weight:600;white-space:nowrap;padding-left:12px;color:var(--fg)}
+table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
+.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 8px}
+.tiers div{text-align:center;font-size:11.5px;color:var(--muted)}
+.tiers .tier-emb{width:100%;max-width:58px;height:auto;display:block;margin:0 auto 6px}
+.tiers b{display:block;color:var(--fg);font-weight:500;font-size:12.5px}
+.danger{width:100%;border:1px solid color-mix(in srgb,var(--neg) 55%,transparent);color:var(--neg);padding:12px;border-radius:10px;margin-top:12px;text-align:center}
+.ghost{display:block;width:100%;border:1px solid var(--line2);color:var(--fg);padding:12px;border-radius:10px;margin-top:10px;text-align:center;font-weight:500}
+.backup textarea{display:block;width:100%;margin-top:10px;background:var(--surface);border:1px solid var(--line2);border-radius:8px;color:var(--fg);font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:10px;resize:vertical;min-height:76px;word-break:break-all}
+.top-r{display:flex;align-items:center;gap:12px}
+.install{font-size:12px;font-weight:600;color:#000;background:var(--accent);padding:6px 12px;border-radius:999px}
+.setup{border:1px solid var(--line2);border-radius:12px;padding:16px;margin-bottom:30px}
+.setup h3{font-family:var(--display);font-size:18px;font-weight:600;margin:0}
+.setup .form{grid-template-columns:1fr auto;margin-top:12px}
+
+/* Comida: ¿me lo puedo comer? */
+.link{display:inline-block;margin-top:12px;font-size:12.5px;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.ftype{grid-template-columns:1fr 1fr;margin-top:16px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 10px;margin-top:16px}
+.fgrid label{display:grid;gap:6px;align-content:space-between;font-size:12px;color:var(--muted);min-width:0}
+.fgrid .lt em{font-style:normal;color:var(--faint)}
+.fgrid .wide{grid-column:1 / -1}
+.fgrid input{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line2);border-radius:8px;color:var(--fg);font:inherit;font-size:16px;padding:10px 12px}
+.verdict{margin-top:24px;padding:16px 0 18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.verdict.example{opacity:.55}
+.v-k{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);overflow-wrap:anywhere}
+.v-t{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:24px;font-weight:600;line-height:1.15;margin-top:8px}
+.v-t i{flex:0 0 auto;width:28px;height:28px;border-radius:50%;display:grid;place-items:center}
+.verdict.si .v-t{color:var(--pos)} .verdict.si .v-t i{background:var(--pos)}
+.verdict.parte .v-t{color:var(--warn)} .verdict.parte .v-t i{background:var(--warn)}
+.verdict.no .v-t{color:var(--neg)} .verdict.no .v-t i{background:var(--neg)}
+.v-d{color:var(--fg2);margin:8px 0 0;font-size:14px;max-width:62ch}
+.meters{display:grid;gap:12px;margin-top:16px}
+.ml{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--muted)}
+.ml b{color:var(--fg);font-weight:500}
+.mb{height:4px;background:var(--line);border-radius:2px;margin-top:6px;overflow:hidden}
+.mb span{display:block;height:100%;border-radius:2px}
+.v-notes{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:6px;font-size:13px;color:var(--fg2)}
+.v-notes li{position:relative;padding-left:14px}
+.v-notes li::before{content:"";position:absolute;left:2px;top:.6em;width:4px;height:4px;border-radius:50%;background:var(--muted)}
+.saved{border-top:1px solid var(--line)}
+.sv{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.sv-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:12px 0}
+.sv-main > i{flex:0 0 auto;width:8px;height:8px;border-radius:50%}
+.sv-main b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv-main small{display:block;font-size:12.5px;color:var(--muted)}
+.sv-del{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.sv-del svg{width:16px;height:16px}
+.scan{margin-top:16px}
+.scan .cta{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:0}
+.scan .cta svg{width:20px;height:20px;flex:0 0 auto}
+.scan .cta:disabled{opacity:.5;cursor:default}
+.scan > .link{display:block;margin:10px auto 0;text-align:center}
+.scan-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:14px;padding:12px 14px;border:1px solid var(--line2);border-radius:10px;font-size:13.5px;color:var(--fg2)}
+.scan-status.ok{border-color:var(--pos-dim)}
+.scan-status.bad{border-color:color-mix(in srgb,var(--neg) 45%,transparent)}
+.scan-status .link{margin:0}
+.spin{flex:0 0 auto;width:16px;height:16px;border-radius:50%;border:2px solid var(--line2);border-top-color:var(--accent);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Top global */
+#v-hist > h2:first-child{margin-top:44px}
+.me-card{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.me-pos{font-family:var(--display);font-size:32px;font-weight:600;color:var(--pos);min-width:62px}
+.me-emb{width:52px;height:52px;flex:0 0 auto}
+.me-name{display:block;font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me-card span{font-size:13px;color:var(--muted)}
+.lb{border-top:1px solid var(--line);margin-top:14px}
+.lb-row{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.lb-row .p{flex:0 0 auto;width:28px;text-align:right;font-family:var(--display);font-weight:600;color:var(--muted)}
+.lb-row.top1 .p{color:#ffd56b} .lb-row.top2 .p{color:#dfe3e8} .lb-row.top3 .p{color:#e9a66b}
+.lb-row .e{width:32px;height:32px;flex:0 0 auto}
+.lb-row .n{flex:1;min-width:0}
+.lb-row .n b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-row .n small{font-size:12px;color:var(--muted)}
+.lb-row .s{font-family:var(--display);font-weight:600;text-align:right;white-space:nowrap}
+.lb-row .s small{display:block;font-family:var(--body);font-weight:400;font-size:11px;color:var(--muted)}
+.lb-row.me{background:color-mix(in srgb,var(--pos) 9%,transparent);border-radius:8px}
+.top-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin-top:6px}
+.top-actions .ghost{flex:1 0 100%}
+.top-actions .link{margin-top:6px}
+
+/* Pestañas */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabs-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+.tab{padding:10px 0 12px;display:grid;justify-items:center;gap:4px;font-size:10.5px;color:var(--muted);text-align:center;min-width:0}
+.tab svg{width:21px;height:21px}
+.tab[aria-selected="true"]{color:var(--fg)}
+.tab[aria-selected="true"] svg{color:var(--accent)}
+
+/* Modal y aviso */
+.modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.94);display:grid;place-items:center;padding:24px}
+.modal-in{text-align:center;max-width:320px;width:100%;animation:pop .45s cubic-bezier(.2,1.3,.4,1)}
+.modal-in .emblem{width:140px;height:140px;margin:0 auto;display:block}
+.modal-k{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:18px}
+.modal-k.neg{color:var(--neg)}
+.modal-t{font-family:var(--display);font-weight:600;font-size:32px;line-height:1.1;color:var(--accent);margin-top:6px}
+.modal-d{color:var(--fg2);margin:10px 0 0}
+.big-streak{font-family:var(--display);font-size:110px;font-weight:600;line-height:1;color:var(--pos)}
+.modal-t.win{color:var(--pos)}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translate(-50%,-170%);z-index:50;background:var(--fg);color:#000;border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;transition:transform .35s;white-space:nowrap}
+.toast.show{transform:translate(-50%,0)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:370px){.emblem{width:72px;height:72px}.rank-name{font-size:24px}.streak-hero .big{font-size:54px}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Ranked Fit <span>· Temporada 1</span></div>
+    <div class="top-r"><button type="button" class="install" id="installBtn" hidden>Instalar</button><div class="sync" id="sync"><i></i><span>En este dispositivo</span></div></div>
+  </header>
+
+  <!-- LOBBY -->
+  <section id="v-lobby" class="view">
+    <div id="setup"></div>
+    <div id="rankCard"></div>
+    <h2 class="h-split">Esta semana <button type="button" data-goto="racha">Ver calendario</button></h2>
+    <div class="week" id="week"></div>
+    <div id="weekHint"></div>
+    <h2 id="missionHead">Hoy</h2>
+    <div id="mission"></div>
+  </section>
+
+  <!-- RACHA -->
+  <section id="v-racha" class="view" hidden>
+    <h2>Racha actual</h2>
+    <div class="streak-hero" id="streakHero"></div>
+    <h2>Hitos de racha</h2>
+    <div class="miles" id="miles"></div>
+    <div class="cal-nav">
+      <button type="button" data-cal="-1" id="calPrev" aria-label="Mes anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <b id="calTitle"></b>
+      <button type="button" data-cal="1" id="calNext" aria-label="Mes siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="cal" id="cal"></div>
+    <div class="legend"><span><i style="background:var(--pos)"></i>Victoria</span><span><i style="background:var(--neg)"></i>Derrota</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--fg)"></i>Hoy</span></div>
+    <div class="cal-stats" id="calStats"></div>
+    <div class="cal-detail" id="calDetail"></div>
+    <div id="fixBox"></div>
+    <div class="cal-nav" style="margin-top:40px">
+      <button type="button" data-year="-1" id="yPrev" aria-label="Año anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <b id="yearTitle"></b>
+      <button type="button" data-year="1" id="yNext" aria-label="Año siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="year" id="year"></div>
+  </section>
+
+  <!-- COMIDA -->
+  <section id="v-food" class="view" hidden>
+    <h2>¿Me lo puedo comer?</h2>
+    <p class="note" style="margin-top:0" id="foodIntro">Copia los datos de la tabla nutricional del empaque, en la columna por porción, y te digo si cabe en tu plan.</p>
+    <div class="scan" id="scanBox" hidden>
+      <button type="button" class="cta" id="scanBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Escanear etiqueta con la cámara</button>
+      <button type="button" class="link" id="scanPick">o elegir una foto de la galería</button>
+      <input type="file" id="scanCam" accept="image/*" capture="environment" hidden>
+      <input type="file" id="scanFile" accept="image/*" hidden>
+      <div class="scan-status" id="scanStatus" role="status" hidden></div>
+    </div>
+    <div class="seg ftype" role="radiogroup" aria-label="Tipo de alimento">
+      <button type="button" role="radio" aria-checked="true" data-ftype="mekato">Mekato o dulce</button>
+      <button type="button" role="radio" aria-checked="false" data-ftype="comida">Comida</button>
+    </div>
+    <form class="fgrid" id="foodForm" autocomplete="off">
+      <label class="wide" for="fName"><span class="lt">Nombre <em>(opcional)</em></span><input id="fName" type="text" maxlength="60" placeholder="Ej. papas de limón"></label>
+      <label for="fKcal"><span class="lt">Calorías (kcal)</span><input id="fKcal" type="text" inputmode="decimal" placeholder="Ej. 140"></label>
+      <label for="fSat"><span class="lt">Grasa saturada (g)</span><input id="fSat" type="text" inputmode="decimal" placeholder="Ej. 2,5"></label>
+      <label for="fSugar"><span class="lt">Azúcares (g) <em>(opcional)</em></span><input id="fSugar" type="text" inputmode="decimal" placeholder="Ej. 1"></label>
+      <label for="fProt"><span class="lt">Proteína (g) <em>(opcional)</em></span><input id="fProt" type="text" inputmode="decimal" placeholder="Ej. 2"></label>
+      <label for="fGrams"><span class="lt">Gramos por porción <em>(opcional)</em></span><input id="fGrams" type="text" inputmode="decimal" placeholder="Ej. 28"></label>
+      <label for="fPor"><span class="lt">Porciones que te vas a comer</span><input id="fPor" type="text" inputmode="decimal" value="1"></label>
+    </form>
+    <div class="verdict" id="verdict"></div>
+    <div id="foodActions"></div>
+    <h2>Tus alimentos guardados</h2>
+    <div id="savedFoods"></div>
+  </section>
+
+  <!-- PLAN -->
+  <section id="v-plan" class="view" hidden>
+    <h2>Rutina semanal</h2>
+    <p class="note" style="margin-top:0">Empuje lunes y jueves, tirón martes y viernes, pierna el miércoles y fin de semana sin gimnasio. Como la prioridad es la barriga, al final de los días de pecho y de espalda hay 20 min de caminata inclinada, y hay abdomen 2 veces por semana. Cuando completes el tope de repeticiones en todas las series, súbele peso.</p>
+    <div class="plan" id="planList" style="margin-top:18px"></div>
+  </section>
+
+  <!-- TOP GLOBAL -->
+  <section id="v-top" class="view" hidden>
+    <h2>Top global · Temporada 1</h2>
+    <div id="topBox"></div>
+  </section>
+
+  <!-- HISTORIAL (se muestra debajo de Racha) -->
+  <section id="v-hist" class="view" hidden>
+    <h2>Progreso de SR</h2>
+    <div class="chart" id="srChart"></div>
+    <h2>Medidas</h2>
+    <form class="form" id="mForm">
+      <label for="mKg">Peso (kg)<input id="mKg" type="number" step="0.1" inputmode="decimal" placeholder="80.0"></label>
+      <label for="mWaist">Cintura (cm)<input id="mWaist" type="number" step="0.5" inputmode="decimal" placeholder="En el ombligo"></label>
+      <button type="submit">Guardar</button>
+    </form>
+    <p class="note">Mide la cintura a la altura del ombligo, en ayunas, una vez por semana. Es el mejor indicador de que la barriga baja. Ganas +15 SR si registras tus medidas una vez por semana.</p>
+    <div class="chart" id="mChart" style="margin-top:20px"></div>
+    <div class="mlist" id="mList"></div>
+    <h2>Partidas</h2>
+    <div class="matches" id="matches"></div>
+  </section>
+
+  <!-- BRIEFING -->
+  <section id="v-brief" class="view" hidden>
+    <h2>Objetivo</h2>
+    <div class="block">
+      <h3>Menos barriga, más músculo</h3>
+      <p>La grasa del abdomen no se quema con abdominales. Baja cuando baja tu grasa total, y eso pasa con un déficit pequeño de calorías. Las pesas y la proteína alta hacen que tu cuerpo conserve y construya músculo mientras tanto.</p>
+      <p>Un ritmo sano es perder de 0,3 a 0,5 kg por semana. Si bajas más rápido, pierdes músculo. Si vienes de estar flaco o de no entrenar, al principio vas a ganar músculo rápido.</p>
+    </div>
+    <h2>Nutrición diaria</h2>
+    <div class="block">
+      <div class="kpis" id="macros"></div>
+      <p class="note" id="macroNote"></p>
+      <ul>
+        <li><b>Desayuno:</b> 3 huevos, 2 arepas o tostadas integrales y una fruta.</li>
+        <li><b>Almuerzo:</b> 180 g de pollo o carne magra, 1 taza de arroz, verduras y ¼ de aguacate.</li>
+        <li><b>Algo en la tarde:</b> yogur griego con avena y fruta, o un batido de proteína.</li>
+        <li><b>Cena:</b> 180 g de pescado, atún o carne, papa o plátano cocido y ensalada.</li>
+      </ul>
+      <p>Para el día a día quedan fuera las gaseosas, los jugos de caja, las frituras y la comida rápida. Los dulces y el mekato van con cupos.</p>
+    </div>
+    <h2>Mekato y dulces</h2>
+    <div class="block">
+      <h3>Sí puedes, con cupos</h3>
+      <p>Un dulce de vez en cuando no daña el plan. Lo que lo daña es comer sin control, así que cada semana tienes cupos fijos.</p>
+      <div class="kpis">
+        <div><b>3</b><span>cupos por semana</span></div>
+        <div><b>1</b><span>máximo por día</span></div>
+        <div><b>200</b><span>kcal por cupo</span></div>
+        <div><b>1</b><span>comida libre</span></div>
+      </div>
+      <p class="note" id="mekatoCount"></p>
+      <button type="button" class="ghost" data-goto="food">Revisar un mekato o una comida</button>
+      <ul>
+        <li><b>Cupo de mekato:</b> una porción de 150 a 200 kcal. Mejor no dos días seguidos.</li>
+        <li><b>Comida libre:</b> una por semana, ideal el sábado. Es una comida, no el día entero: una hamburguesa, 2 o 3 porciones de pizza o un postre grande.</li>
+        <li><b>Cuándo:</b> después del almuerzo o después de entrenar, con el estómago lleno. Nunca de noche comiendo directo del paquete.</li>
+        <li><b>Compénsalo:</b> ese día come media taza de arroz o media arepa menos, unas 100 kcal.</li>
+        <li><b>Compra la porción individual.</b> Nada de paquetes familiares en la casa.</li>
+        <li><b>Gaseosa:</b> mejor la versión cero. <b>Alcohol:</b> solo en la comida libre y máximo 2 cervezas.</li>
+        <li>Los cupos se reinician cada lunes y no se acumulan.</li>
+      </ul>
+      <h3 style="margin-top:24px">Qué cabe en un cupo</h3>
+      <table class="pts">
+        <tr><td>2 o 3 cuadritos de chocolate oscuro (20 g)</td><td>≈110 kcal</td></tr>
+        <tr><td>2 chocolatinas pequeñas tipo Jet</td><td>≈130 kcal</td></tr>
+        <tr><td>Paquete pequeño de papas (25–30 g)</td><td>≈150 kcal</td></tr>
+        <tr><td>Bocadillo con un pedazo de queso</td><td>≈160 kcal</td></tr>
+        <tr><td>2 cucharadas de arequipe</td><td>≈130 kcal</td></tr>
+        <tr><td>Paquete pequeño de gomitas (30 g)</td><td>≈100 kcal</td></tr>
+        <tr><td>Paleta de agua</td><td>≈80 kcal</td></tr>
+        <tr><td>Helado de crema pequeño</td><td>≈180 kcal</td></tr>
+        <tr><td>Lata de gaseosa normal (350 ml)</td><td>≈150 kcal</td></tr>
+      </table>
+      <p class="note">Calorías aproximadas. Un Chocoramo (casi 300 kcal), una porción de torta, una oblea con todo, un paquete grande de papas o un combo de comida rápida no caben en un cupo. Esos van en la comida libre.</p>
+    </div>
+    <h2>Puntos de SR</h2>
+    <div class="block">
+      <table class="pts">
+        <tr><td>Entrenamiento completado</td><td class="pos">+40</td></tr>
+        <tr><td>Descanso activo (sábado y domingo)</td><td class="pos">+20</td></tr>
+        <tr><td>Proteína del día cumplida</td><td class="pos">+10</td></tr>
+        <tr><td>Comida limpia</td><td class="pos">+10</td></tr>
+        <tr><td>Mekato dentro del cupo</td><td class="pos">+5</td></tr>
+        <tr><td>Comida libre (1 por semana)</td><td>0</td></tr>
+        <tr><td>20 min de cardio</td><td class="pos">+10</td></tr>
+        <tr><td>3 litros de agua</td><td class="pos">+5</td></tr>
+        <tr><td>Dormir 7 horas o más</td><td class="pos">+5</td></tr>
+        <tr><td>Partida perfecta (todo cumplido)</td><td class="pos">+10</td></tr>
+        <tr><td>Bonus de racha (2 por día seguido, máx. 20)</td><td class="pos">+20</td></tr>
+        <tr><td>Proteína baja</td><td class="neg">−5</td></tr>
+        <tr><td>Me pasé (atracón, mekato sin cupo o alcohol de más)</td><td class="neg">−20</td></tr>
+        <tr><td>Entrenamiento fallado</td><td class="neg">−50</td></tr>
+        <tr><td>Día sin registrar (no te presentaste)</td><td class="neg">−60</td></tr>
+      </table>
+      <p class="note">Ganas el día si entrenas (o haces el descanso activo el fin de semana) y no te pasas con la comida. El mekato dentro del cupo y la comida libre no rompen la racha. Al subir de rango ganas 3 escudos, y cada uno evita una vez que bajes de ese rango.</p>
+    </div>
+    <h2>Rangos</h2>
+    <div class="tiers" id="tierGrid"></div>
+    <h2>Copia de seguridad</h2>
+    <p class="note" style="margin-top:0">Guarda tu progreso como un código para pasarlo a otro celular o a la app instalada.</p>
+    <div class="backup">
+      <button type="button" class="ghost" id="exportBtn">Copiar mi código</button>
+      <textarea id="backupBox" rows="3" placeholder="Pega aquí un código para restaurar tu progreso" spellcheck="false" aria-label="Código de copia de seguridad"></textarea>
+      <button type="button" class="ghost" id="importBtn">Restaurar desde el código</button>
+    </div>
+    <h2>Ajustes</h2>
+    <p class="note" style="margin-top:0">Reinicia la temporada desde Bronce I. Se borra todo el historial.</p>
+    <button class="danger" id="resetBtn" type="button">Reiniciar temporada</button>
+  </section>
+</div>
+
+<nav class="tabs" aria-label="Secciones">
+  <div class="tabs-in" role="tablist">
+    <button class="tab" role="tab" data-v="lobby" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7.5 3.5v5.5c0 4.6-3.2 7.9-7.5 9.3-4.3-1.4-7.5-4.7-7.5-9.3V6.5z"/></svg>Lobby</button>
+    <button class="tab" role="tab" data-v="top" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4v3h-4z"/></svg>Top</button>
+    <button class="tab" role="tab" data-v="racha" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c.6 3.4 4.8 5.4 4.8 10.1A4.8 4.8 0 0 1 7.2 13c0-2.3 1.2-3.9 2.4-4.9.2 1.7 1 2.9 2.3 3.4-.6-2.9-.4-5.8.1-8.5z"/></svg>Racha</button>
+    <button class="tab" role="tab" data-v="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 7.5c-1.6-1.4-5.2-1.5-6.2 1.6-1.2 3.8 1.1 9.6 3.7 10.4 1 .3 1.6-.3 2.5-.3s1.5.6 2.5.3c2.6-.8 4.9-6.6 3.7-10.4-1-3.1-4.6-3-6.2-1.6zM12 7.5c0-2.1 1.1-3.6 3.2-4.2"/></svg>Comida</button>
+    <button class="tab" role="tab" data-v="plan" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 9.5v5M6.5 6.5v11M17.5 6.5v11M21 9.5v5M6.5 12h11"/></svg>Plan</button>
+    <button class="tab" role="tab" data-v="brief" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.5h12v17H6zM9 8h6M9 12h6M9 16h4"/></svg>Briefing</button>
+  </div>
+</nav>
+
+<div class="modal" id="modal" hidden><div class="modal-in" id="modalIn"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+const KEY = "rankedfit.v1";
+
+/* ---------- Rangos ---------- */
+const TIERS = [
+  {name:"Bronce",      min:0,     divs:[0,300,600],      c1:"#f0b27a", c2:"#7a4522"},
+  {name:"Plata",       min:900,   divs:[900,1300,1700],  c1:"#f2f5f8", c2:"#66717d"},
+  {name:"Oro",         min:2100,  divs:[2100,2600,3100], c1:"#ffe08a", c2:"#a8761a"},
+  {name:"Platino",     min:3600,  divs:[3600,4200,4800], c1:"#b5fff3", c2:"#22867d"},
+  {name:"Diamante",    min:5400,  divs:[5400,6100,6800], c1:"#c4e2ff", c2:"#2f5fd0"},
+  {name:"Carmesí",     min:7500,  divs:[7500,8350,9200], c1:"#ff8f9c", c2:"#8d0f22"},
+  {name:"Iridiscente", min:10000, divs:[10000],          c1:"#ffb3f0", c2:"#4d5cff", iri:true},
+  {name:"Top 250",     min:13500, divs:[13500],          c1:"#ffe7a0", c2:"#b8862a", top:true}
+];
+const ROMAN = ["I","II","III"];
+const RANK_IMG = ["bronze","silver","gold","platinum","diamond","crimson","iridescent","top250"];
+function tierIdx(sr){ let t = 0; TIERS.forEach((x,i)=>{ if (sr >= x.min) t = i; }); return t; }
+function divIdx(t, sr){ let d = 0; TIERS[t].divs.forEach((m,j)=>{ if (sr >= m) d = j; }); return d; }
+function labelOf(t, d){ const T = TIERS[t]; return T.name + (T.divs.length > 1 ? " " + ROMAN[d] : ""); }
+function rankOf(sr){
+  const t = tierIdx(sr); const T = TIERS[t]; const d = divIdx(t, sr);
+  const next = d < T.divs.length-1 ? T.divs[d+1] : (TIERS[t+1] ? TIERS[t+1].min : null);
+  const nextLabel = next == null ? null : labelOf(tierIdx(next), divIdx(tierIdx(next), next));
+  return {t, d, cur:T.divs[d], next, label:labelOf(t, d), nextLabel};
+}
+
+let gid = 0, logosOK = true;
+function emblem(t, d, cls){
+  const c = cls == null ? "emblem" : cls;
+  if (logosOK && RANK_IMG[t]) return `<img class="${c} rank-img" src="ranks/${RANK_IMG[t]}.png" width="128" height="128" alt="${labelOf(t, d)}" data-t="${t}" data-d="${d}" data-cls="${c}" decoding="async">`;
+  return emblemSvg(t, d, cls);
+}
+function emblemSvg(t, d, cls){
+  const T = TIERS[t]; const id = "g" + (gid++);
+  let fill = `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${T.c1}"/><stop offset="1" stop-color="${T.c2}"/></linearGradient>`;
+  if (T.iri) fill = `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb3f0"/><stop offset=".35" stop-color="#9ef3ff"/><stop offset=".7" stop-color="#b48cff"/><stop offset="1" stop-color="#4d5cff"/></linearGradient>`;
+  const shield = "M60 6 L106 26 L106 66 C106 92 86 108 60 116 C34 108 14 92 14 66 L14 26 Z";
+  const inner  = "M60 18 L95 33 L95 65 C95 85 80 97 60 104 C40 97 25 85 25 65 L25 33 Z";
+  let mark = "";
+  if (T.top) {
+    mark = `<path d="M36 70 L40 44 L50 56 L60 38 L70 56 L80 44 L84 70 Z" fill="#1a1407"/><text x="60" y="90" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-weight="700" font-size="17" fill="#1a1407">250</text>`;
+  } else if (T.iri) {
+    mark = `<path d="M60 34 L67 55 L89 55 L71 68 L78 89 L60 76 L42 89 L49 68 L31 55 L53 55 Z" fill="#14112a" opacity=".85"/>`;
+  } else {
+    const n = d + 1; const base = 52 + (n-1)*9;
+    for (let i=0;i<n;i++){ const y = base - i*15; mark += `<path d="M38 ${y+8} L60 ${y-6} L82 ${y+8} L82 ${y+16} L60 ${y+2} L38 ${y+16} Z" fill="#111517" opacity=".82"/>`; }
+  }
+  return `<svg class="${cls == null ? "emblem" : cls}" viewBox="0 0 120 122" role="img" aria-label="${T.name}"><defs>${fill}</defs>
+    <path d="${shield}" fill="url(#${id})"/>
+    <path d="${shield}" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="2"/>
+    <path d="${inner}" fill="#fff" fill-opacity=".14"/>
+    <path d="M60 6 L106 26 L60 46 L14 26 Z" fill="#fff" fill-opacity=".12"/>
+    ${mark}</svg>`;
+}
+
+/* ---------- Plan ---------- */
+const PUSH = {type:"fuerza", title:"Pecho, hombro y tríceps", tag:"Empuje + 20 min de cardio", ex:[
+  ["Press plano con barra","4×6–8","El pesado del día. Descansa 2 min entre series"],
+  ["Press inclinado","3×8–10","Banco a 30°, barra o mancuernas. Parte alta del pecho"],
+  ["Press declinado","3×8–10","Parte baja del pecho. Baja controlado"],
+  ["Peck deck","3×12–15","Aprieta 1 s al cerrar. Va después de los press"],
+  ["Press militar","3×8–10","Abdomen firme, sin arquear la espalda"],
+  ["Vuelos laterales","4×12–15","Peso ligero, sube hasta la altura del hombro"],
+  ["Rompecráneos","3×8–10","Codos quietos, baja la barra hacia la frente"],
+  ["Extensión de tríceps en polea","3×12","Codos pegados al cuerpo, estira completo abajo"],
+  ["Cardio: caminata inclinada","20 min","Inclinación 10–12 %, 5–6 km/h. Quema grasa extra sin cansar las piernas"]]};
+const PULL = {type:"fuerza", title:"Espalda y bíceps", tag:"Tirón + abdomen + 20 min de cardio", ex:[
+  ["Jalón al pecho agarre abierto","4×8–10","Saca el pecho y lleva los codos hacia las costillas"],
+  ["Jalón al pecho agarre cerrado","3×10–12","Agarre en V, estira completo arriba"],
+  ["Remo en T","4×8–10","Espalda recta, tira hacia el abdomen"],
+  ["Hiperextensiones (espalda baja)","3×12–15","En banco romano. Sube hasta quedar recto, sin pasarte"],
+  ["Curl araña","3×10–12","Pecho apoyado en banco inclinado, sin balanceo"],
+  ["Curl martillo","3×10–12","Agarre neutro, trabaja bíceps y antebrazo"],
+  ["Abdomen: elevación de piernas colgado + crunch en polea","3×12–15 c/u","Superserie, sin impulso"],
+  ["Cardio: caminata inclinada","20 min","Inclinación 10–12 %, 5–6 km/h"]]};
+const LEGS = {type:"fuerza", title:"Pierna", tag:"Cuádriceps, femoral, glúteo + abdomen", ex:[
+  ["Sentadilla con barra","4×6–8","Baja al menos hasta el paralelo. Descansa 2–3 min"],
+  ["Prensa de piernas","3×10–12","Pies a la altura de los hombros, no bloquees las rodillas"],
+  ["Peso muerto rumano","3×8–10","Cadera atrás, espalda recta, siente el femoral"],
+  ["Zancadas caminando con mancuernas","3×10 por pierna","Paso largo, la rodilla de atrás casi toca el piso"],
+  ["Curl femoral en máquina","3×10–12","Pausa de 1 s con la pierna doblada"],
+  ["Extensión de cuádriceps","3×12–15","Baja en 2–3 s"],
+  ["Pantorrilla de pie o en prensa","4×12–15","Pausa abajo y sube completo"],
+  ["Abdomen: plancha + rueda abdominal","3 rondas","Plancha 45 s y 8–10 ruedas desde rodillas"]]};
+const PLAN = {
+  1: PUSH,
+  2: PULL,
+  3: LEGS,
+  4: Object.assign({}, PUSH, {rep:"Repite el lunes"}),
+  5: Object.assign({}, PULL, {rep:"Repite el martes"}),
+  6: {type:"descanso", title:"Descanso activo", tag:"Sin gimnasio. Buen día para tu comida libre", ex:[
+    ["Caminata o bici suave","30 min","A tu ritmo. Un partido tranquilo también cuenta"],
+    ["Estiramientos","10–15 min","Pecho, cadera, femoral y espalda baja"]]},
+  0: {type:"descanso", title:"Descanso activo", tag:"Sin gimnasio. Recupera y prepara la semana", ex:[
+    ["Caminata o bici suave","30 min","Sin gimnasio, solo moverte"],
+    ["Movilidad","10 min","Hombros, cadera y espalda"],
+    ["Preparar comidas de la semana","—","Cocina pollo, arroz y verduras para 3 días"]]}
+};
+const DAYN = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const DAYFULL = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+const MES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const TYPE_LBL = {fuerza:"Gimnasio", descanso:"Descanso"};
+
+/* ---------- Fechas ---------- */
+function ymd(dt){ return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0"); }
+function parse(s){ const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); }
+function addDays(s, n){ const d = parse(s); d.setDate(d.getDate()+n); return ymd(d); }
+function today(){ return ymd(new Date()); }
+function wday(s){ return parse(s).getDay(); }
+function fmt(s){ const d = parse(s); return DAYN[d.getDay()]+" "+d.getDate()+" "+MES[d.getMonth()]; }
+function fmtLong(s){ const d = parse(s); return DAYFULL[d.getDay()]+" "+d.getDate()+" de "+MESES[d.getMonth()].toLowerCase(); }
+function weekStart(s){ return addDays(s, -((wday(s)+6)%7)); }
+
+/* ---------- Estado ---------- */
+function fresh(){
+  const t = today();
+  return {v:1, planV:2, sr:0, peak:0, shields:0, streak:0, best:0, start:t, lastClosed:addDays(t,-1),
+          logs:{}, drafts:{}, measures:[], lastMeasureBonus:null, updatedAt:0};
+}
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch(e){ S = fresh(); }
+if (!S || S.v !== 1) S = fresh();
+function migrate(){
+  if (!S.drafts) S.drafts = {};
+  if (!S.logs) S.logs = {};
+  if (!Array.isArray(S.foods)) S.foods = [];
+  if (S.planV !== 2) { Object.keys(S.drafts).forEach(k=>{ S.drafts[k].ex = []; }); S.planV = 2; }
+}
+migrate();
+
+function latestKg(){ for (let i=S.measures.length-1;i>=0;i--) if (S.measures[i].kg) return S.measures[i].kg; return 80; }
+function proteinGoal(){ return Math.round(latestKg()*2/5)*5; }
+function kcalGoal(){ return Math.round(latestKg()*28/50)*50; }
+
+const ITEMS = [
+  {k:"prot",  t:()=>"Proteína "+proteinGoal()+" g", s:"Huevos, pollo, carne, atún, yogur griego", pos:10, neg:-5},
+  {k:"steps", t:()=>"20 min de cardio", s:"Caminata inclinada, bici, elíptica o trotar. El del gym cuenta", pos:10},
+  {k:"water", t:()=>"3 litros de agua", s:"Una botella de 1 L, llénala 3 veces", pos:5},
+  {k:"sleep", t:()=>"Dormí 7 horas o más", s:"El músculo crece mientras duermes", pos:5}
+];
+
+/* ---------- Mekato ---------- */
+const CUPOS = 3, LIBRES = 1;
+const FOOD_LINE = {limpio:["Comida limpia",10], cupo:["Mekato dentro del cupo",5], libre:["Comida libre de la semana",0], pase:["Me pasé con la comida",-20]};
+function foodOf(d){ if (!d) return "limpio"; if (d.food && FOOD_LINE[d.food]) return d.food; return d.junk ? "pase" : "limpio"; }
+function weekUsage(date){
+  const ws = weekStart(date); const u = {cupo:0, libre:0};
+  for (let i=0;i<7;i++){
+    const k = addDays(ws, i); const lg = S.logs[k];
+    if (k === date || !lg) continue;
+    if (lg.food === "cupo") u.cupo++; else if (lg.food === "libre") u.libre++;
+  }
+  return u;
+}
+function effFood(date, d){
+  const f = foodOf(d); const u = weekUsage(date);
+  if (f === "cupo" && u.cupo >= CUPOS) return {f:"pase", why:"Mekato sin cupos disponibles"};
+  if (f === "libre" && u.libre >= LIBRES) return {f:"pase", why:"Segunda comida libre de la semana"};
+  return {f, why:null};
+}
+function weekCount(date){
+  const u = weekUsage(date); const lg = S.logs[date];
+  const f = lg ? lg.food : (S.drafts[date] ? effFood(date, S.drafts[date]).f : null);
+  if (f === "cupo") u.cupo++; else if (f === "libre") u.libre++;
+  return u;
+}
+
+/* ---------- Puntaje ---------- */
+const MILES = [3,7,14,21,30,60,100];
+const MILE_MSG = {3:"Tres días seguidos cumpliendo. Así empieza el hábito.", 7:"Una semana completa sin fallar.", 14:"Dos semanas seguidas. Mide tu cintura y compara.", 21:"Tres semanas: el hábito ya está armado.", 30:"Un mes entero ganando.", 60:"Dos meses sin aflojar.", 100:"Cien días seguidos."};
+
+function scoreDay(date, d){
+  const p = PLAN[wday(date)]; const rest = p.type === "descanso"; const L = [];
+  if (rest) { if (d.w) L.push(["Descanso activo", 20]); }
+  else L.push(d.w ? ["Entrenamiento completado", 40] : ["Entrenamiento fallado", -50]);
+  L.push(d.prot ? ["Proteína cumplida", 10] : ["Proteína baja", -5]);
+  const ef = effFood(date, d);
+  L.push(ef.why ? [ef.why, -20] : FOOD_LINE[ef.f].slice());
+  if (d.steps) L.push(["20 min de cardio", 10]);
+  if (d.water) L.push(["3 L de agua", 5]);
+  if (d.sleep) L.push(["Sueño de 7 h", 5]);
+  const okFood = ef.f === "limpio" || ef.f === "cupo";
+  const perfect = !!(d.w && d.prot && okFood && d.steps && d.water && d.sleep);
+  if (perfect) L.push(["Partida perfecta", 10]);
+  return {L, win: !!d.w && ef.f !== "pase", perfect, food: ef.f};
+}
+
+function closeDay(date, draft, noShow){
+  const before = S.sr; let L, win, food = null, milestone = null;
+  if (noShow) { L = [["No te presentaste", -60]]; win = false; }
+  else { const r = scoreDay(date, draft); L = r.L; win = r.win; food = r.food; }
+  if (win) {
+    S.streak++; S.best = Math.max(S.best, S.streak);
+    L.push(["Racha de "+S.streak+(S.streak === 1 ? " día" : " días"), Math.min(S.streak,10)*2]);
+    if (MILES.includes(S.streak)) milestone = S.streak;
+  } else S.streak = 0;
+  const sum = L.reduce((a,x)=>a+x[1], 0);
+  let after = Math.max(0, before + sum);
+  const rb = rankOf(before); const floor = TIERS[rb.t].min; let shieldUsed = false;
+  if (after < floor && S.shields > 0) { S.shields--; after = floor; shieldUsed = true; L.push(["Escudo de rango usado", 0]); }
+  const ra = rankOf(after);
+  if (ra.t > rb.t) S.shields = 3;
+  S.sr = after; S.peak = Math.max(S.peak, after);
+  S.logs[date] = {win, noShow:!!noShow, L, delta: after-before, sr: after, food, title: PLAN[wday(date)].title, d: noShow ? null : compactD(draft)};
+  S.lastClosed = date; delete S.drafts[date];
+  return {before, after, rb, ra, win, shieldUsed, milestone, delta: after-before};
+}
+
+/* Corregir un día pasado (hasta 7 días atrás) */
+function compactD(d){ return {w:!!d.w, prot:!!d.prot, food:foodOf(d), steps:!!d.steps, water:!!d.water, sleep:!!d.sleep}; }
+function runEndingAt(k){ let n = 0; for (let x = k; S.logs[x] && S.logs[x].win; x = addDays(x,-1)) n++; return n; }
+function longestRun(){
+  let best = 0, run = 0, prev = null;
+  Object.keys(S.logs).sort().forEach(k=>{
+    const w = !!S.logs[k].win;
+    run = w ? ((prev && addDays(prev,1) === k) ? run + 1 : 1) : 0;
+    prev = k; if (run > best) best = run;
+  });
+  return best;
+}
+function correctDay(k, nd){
+  const old = S.logs[k]; if (!old) return null;
+  const r = scoreDay(k, nd); const L = r.L.slice();
+  if (r.win) { const n = runEndingAt(addDays(k,-1)) + 1; L.push(["Racha de " + n + (n === 1 ? " día" : " días"), Math.min(n,10)*2]); }
+  L.push(["Corregido después", 0]);
+  const newDelta = L.reduce((a,x)=>a+x[1], 0);
+  const before = S.sr;
+  S.sr = Math.max(0, before + newDelta - (old.delta || 0));
+  const applied = S.sr - before;
+  Object.keys(S.logs).forEach(x=>{ if (x > k) S.logs[x].sr = Math.max(0, (S.logs[x].sr || 0) + applied); });
+  S.logs[k] = {win:r.win, noShow:false, L, delta:newDelta, sr:Math.max(0, (old.sr || 0) - (old.delta || 0) + newDelta), food:r.food, title:old.title || PLAN[wday(k)].title, d:compactD(nd), fixed:true};
+  const oldStreak = S.streak;
+  S.streak = runEndingAt(S.lastClosed); S.best = Math.max(longestRun(), S.streak);
+  S.peak = Math.max(S.peak, S.sr);
+  const rb = rankOf(before), ra = rankOf(S.sr); if (ra.t > rb.t) S.shields = 3;
+  const reached = MILES.filter(m => m > oldStreak && m <= S.streak);
+  return {rb, ra, delta:applied, win:r.win, shieldUsed:false, milestone: reached.length ? reached[reached.length-1] : null};
+}
+
+function hasMarks(d){ return !!d && (d.w || d.prot || d.steps || d.water || d.sleep || d.junk || d.food); }
+function catchUp(){
+  const t = today(); let d = addDays(S.lastClosed, 1); const events = []; let guard = 0;
+  while (d < t && guard < 400) {
+    guard++;
+    const draft = S.drafts[d];
+    const daysAway = Math.round((parse(t) - parse(d)) / 864e5);
+    if (hasMarks(draft)) events.push(closeDay(d, draft, false));
+    else if (daysAway <= 14) events.push(closeDay(d, null, true));
+    else { S.logs[d] = {win:false, noShow:true, off:true, L:[["Fuera de temporada",0]], delta:0, sr:S.sr, food:null, title:PLAN[wday(d)].title, d:null}; S.lastClosed = d; S.streak = 0; }
+    d = addDays(d, 1);
+  }
+  Object.keys(S.drafts).forEach(k=>{ if (k < t) delete S.drafts[k]; });
+  return events;
+}
+
+/* ---------- Guardado ---------- */
+let dbDoc = null, saving = false, pending = false;
+function save(){
+  S.updatedAt = Date.now();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+  if (dbDoc) pushRemote();
+  schedulePush();
+}
+async function pushRemote(){
+  if (saving) { pending = true; return; }
+  saving = true;
+  try { await dbDoc.set(JSON.parse(JSON.stringify(S))); } catch(e){}
+  saving = false;
+  if (pending) { pending = false; pushRemote(); }
+}
+function setSync(on){ const el = $("sync"); el.classList.toggle("on", on); el.lastElementChild.textContent = on ? "Guardado en la nube" : "En este dispositivo"; }
+
+/* ---------- Top global (Firebase; solo en la app pública con firebase-config.js) ---------- */
+const PUBLIC_URL = "https://juanbeltran22.github.io/ranked-fit/";
+const FB_VER = "10.12.2";
+let fb = null, fbLoading = null, topCache = null, topEdit = false, pushTimer = null, lastPushSig = "", leaveArmed = false, leaveT = null;
+function topEnabled(){ return !!(window.RF_FIREBASE && window.RF_FIREBASE.projectId); }
+function fbInit(){
+  if (!topEnabled()) return Promise.resolve(null);
+  if (fb) return Promise.resolve(fb);
+  if (fbLoading) return fbLoading;
+  fbLoading = (async ()=>{
+    try {
+      const base = "https://www.gstatic.com/firebasejs/" + FB_VER + "/";
+      const [appM, authM, fsM] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")]);
+      const app = appM.initializeApp(window.RF_FIREBASE);
+      const auth = authM.getAuth(app);
+      const current = await new Promise(res=>{ const un = authM.onAuthStateChanged(auth, u=>{ un(); res(u); }); });
+      const user = current || (await authM.signInAnonymously(auth)).user;
+      fb = {db: fsM.getFirestore(app), uid: user.uid, fs: fsM};
+      return fb;
+    } catch(e) { console.warn("Top global:", e && e.code || e); return null; }
+    finally { fbLoading = null; }
+  })();
+  return fbLoading;
+}
+function cleanNick(s){ return String(s || "").normalize("NFC").replace(/[^\p{L}\p{N} ._-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 20); }
+function rankSig(){ return [S.nick, Math.round(S.sr), rankOf(S.sr).label, S.streak|0, S.best|0].join("|"); }
+function schedulePush(){ if (!topEnabled() || !S.nick) return; clearTimeout(pushTimer); pushTimer = setTimeout(pushRank, 1500); }
+async function pushRank(){
+  if (!topEnabled() || !S.nick || rankSig() === lastPushSig) return true;
+  const f = await fbInit(); if (!f) return false;
+  const sig = rankSig();
+  try {
+    await f.fs.setDoc(f.fs.doc(f.db, "players", f.uid), {name: S.nick, sr: Math.round(S.sr), tier: rankOf(S.sr).label, streak: S.streak|0, best: S.best|0, updatedAt: f.fs.serverTimestamp()});
+    lastPushSig = sig; return true;
+  } catch(e) { console.warn("Top global:", e && e.code || e); return false; }
+}
+async function loadTop(){
+  if (!topEnabled()) return;
+  if (!topCache || topCache.error) { topCache = {loading:true}; renderTop(); }
+  const f = await fbInit();
+  if (!f) { topCache = {error:true}; renderTop(); return; }
+  const fs = f.fs, col = fs.collection(f.db, "players");
+  try {
+    const snap = await fs.getDocs(fs.query(col, fs.orderBy("sr", "desc"), fs.limit(100)));
+    const cutoff = Date.now() - 30*864e5;   // quien no abre la app en 30 días sale de la lista
+    const rows = snap.docs.map(d=>Object.assign({id:d.id}, d.data())).filter(r=>{
+      const t = r.updatedAt && r.updatedAt.toMillis ? r.updatedAt.toMillis() : 0;
+      return t >= cutoff || r.id === f.uid;
+    });
+    let total = null, myPos = null;
+    try { total = (await fs.getCountFromServer(col)).data().count; } catch(_){}
+    const idx = rows.findIndex(r=>r.id === f.uid);
+    if (idx >= 0) myPos = idx + 1;
+    else if (S.nick) { try { myPos = (await fs.getCountFromServer(fs.query(col, fs.where("sr", ">", Math.round(S.sr))))).data().count + 1; } catch(_){} }
+    topCache = {rows, total, myPos, at: Date.now(), uid: f.uid};
+  } catch(e) { console.warn("Top global:", e && e.code || e); topCache = {error:true}; }
+  renderTop();
+}
+function timeAgo(t){ const s = Math.round((Date.now() - t)/1000); return s < 60 ? "hace un momento" : (s < 3600 ? "hace " + Math.round(s/60) + " min" : "hace " + Math.round(s/3600) + " h"); }
+function renderTop(){
+  const box = $("topBox"); if (!box) return;
+  const onPublic = location.href.indexOf(PUBLIC_URL) === 0;
+  if (!topEnabled()) {
+    box.innerHTML = onPublic
+      ? `<div class="empty">El top global se está configurando. Vuelve en un rato.</div>`
+      : `<div class="block"><h3>El top global está en la app pública</h3>
+          <p>Para competir con tus amigos, instala Ranked Fit desde su link. Ahí se juntan los puntos de todos.</p>
+          <a class="cta" href="${PUBLIC_URL}" target="_blank" rel="noopener" style="text-decoration:none">Abrir la app pública</a>
+          <p class="note" style="user-select:all;-webkit-user-select:all">${PUBLIC_URL}</p>
+          <p class="note">Para llevarte tu progreso, ve a Briefing → Copia de seguridad → Copiar mi código. En la app pública pega el código y toca Restaurar.</p></div>`;
+    return;
+  }
+  if (!S.nick || topEdit) {
+    box.innerHTML = `<div class="block"><h3>${S.nick ? "Cambia tu apodo" : "Entra al top global"}</h3>
+      <p class="note" style="margin-top:2px">En el top solo se ve tu apodo, tu rango, tus SR y tu racha. Tu peso y tus comidas se quedan en tu celular.</p>
+      <form class="form" id="nickForm" style="grid-template-columns:1fr auto;margin-top:14px"><label for="nickIn">Apodo<input id="nickIn" type="text" maxlength="20" autocomplete="off" placeholder="Ej. JuanFit" value="${esc(S.nick || "")}"></label><button type="submit">${S.nick ? "Guardar" : "Entrar"}</button></form>
+      ${S.nick ? `<button type="button" class="link" data-top="cancel">Cancelar</button>` : ""}</div>`;
+    return;
+  }
+  if (!topCache || topCache.loading) { box.innerHTML = `<div class="empty">Cargando el top…</div>`; return; }
+  if (topCache.error) { box.innerHTML = `<div class="empty">No pude cargar el top. Revisa tu conexión.<br><button type="button" class="link" data-top="refresh">Intentar otra vez</button></div>`; return; }
+  const me = rankOf(S.sr); const rows = topCache.rows || [];
+  box.innerHTML = `
+    <div class="me-card"><div class="me-pos num">${topCache.myPos ? "#" + topCache.myPos : "—"}</div>${emblem(me.t, me.d, "me-emb")}
+      <div style="min-width:0;flex:1"><b class="me-name">${esc(S.nick)}</b><span>${me.label} · ${Math.round(S.sr).toLocaleString("es")} SR</span></div></div>
+    <p class="note">${topCache.total != null ? topCache.total + (topCache.total === 1 ? " jugador" : " jugadores") + " en la temporada · " : ""}actualizado ${timeAgo(topCache.at)}</p>
+    <div class="lb">${rows.length ? rows.map((r,i)=>{
+      const sr = Math.max(0, Math.round(Number(r.sr) || 0)); const rk = rankOf(sr); const mine = r.id === topCache.uid;
+      return `<div class="lb-row${i < 3 ? " top" + (i+1) : ""}${mine ? " me" : ""}"><span class="p num">${i+1}</span>${emblem(rk.t, rk.d, "e")}<span class="n"><b>${esc(String(r.name || "Jugador").slice(0,20))}${mine ? " · tú" : ""}</b><small>${rk.label} · racha ${Math.max(0, Math.round(Number(r.streak) || 0))}</small></span><span class="s num">${sr.toLocaleString("es")}<small>SR</small></span></div>`;
+    }).join("") : `<div class="empty" style="margin-top:14px">Todavía no hay nadie en el top. Sé el primero.</div>`}</div>
+    <div class="top-actions"><button type="button" class="ghost" data-top="refresh">Actualizar</button><button type="button" class="link" data-top="nick">Cambiar apodo</button><button type="button" class="link" data-top="leave">Salir del top</button></div>`;
+}
+function openTop(){
+  renderTop();
+  if (topEnabled() && S.nick && !topEdit && (!topCache || topCache.error || Date.now() - (topCache.at || 0) > 60000)) loadTop();
+}
+async function topAction(a, el){
+  if (a === "refresh") { await pushRank(); loadTop(); return; }
+  if (a === "nick") { topEdit = true; renderTop(); refocus("#nickIn"); return; }
+  if (a === "cancel") { topEdit = false; renderTop(); return; }
+  if (a === "leave") {
+    if (!leaveArmed) { leaveArmed = true; el.textContent = "Toca otra vez para salir"; leaveT = setTimeout(()=>{ leaveArmed = false; renderTop(); }, 4000); return; }
+    clearTimeout(leaveT); leaveArmed = false;
+    const f = await fbInit();
+    if (f) { try { await f.fs.deleteDoc(f.fs.doc(f.db, "players", f.uid)); } catch(_){} }
+    S.nick = null; lastPushSig = ""; topCache = null; save(); renderTop(); toast("Saliste del top");
+  }
+}
+
+/* ---------- UI ---------- */
+function $(id){ return document.getElementById(id); }
+function sign(n){ return (n >= 0 ? "+" : "−") + Math.abs(n); }
+function applyAccent(){
+  const T = TIERS[rankOf(S.sr).t];
+  document.documentElement.style.setProperty("--accent", T.iri ? "#c49bff" : T.c1);
+}
+
+function dayState(k){
+  const lg = S.logs[k];
+  if (lg) { if (lg.off || (lg.L && lg.L[0] && lg.L[0][0] === "Fuera de temporada")) return "off"; return lg.win ? "w" : "l"; }
+  const t = today();
+  if (k === t) return "today";
+  if (k > t) return "fut";
+  return "out";
+}
+
+function renderRank(){
+  const r = rankOf(S.sr);
+  const pct = r.next == null ? 100 : Math.max(0, Math.min(100, (S.sr - r.cur) / (r.next - r.cur) * 100));
+  $("rankCard").innerHTML = `
+    <div class="rank-row">${emblem(r.t, r.d)}
+      <div style="min-width:0">
+        <div class="rank-name">${r.label}</div>
+        <div class="rank-sr num">${S.sr.toLocaleString("es")} SR</div>
+        <div class="rank-next">${r.next == null ? "Rango máximo de la temporada" : `${(r.next - S.sr).toLocaleString("es")} SR para ${r.nextLabel}`}</div>
+      </div>
+    </div>
+    <div class="bar"><span style="width:${pct}%"></span></div>
+    <div class="stats">
+      <div class="stat"><b class="num">${S.streak}</b><span>Racha</span></div>
+      <div class="stat"><b class="num">${S.best}</b><span>Mejor racha</span></div>
+      <div class="stat"><b class="num">${S.shields}</b><span>${S.shields === 1 ? "Escudo" : "Escudos"}</span></div>
+    </div>`;
+}
+
+function renderWeek(){
+  const t = today(); const monday = weekStart(t); let h = "";
+  for (let i=0;i<7;i++){
+    const k = addDays(monday, i); const st = dayState(k); const lg = S.logs[k];
+    let c = "wd"; if (st === "w") c += " win"; else if (st === "l") c += " loss"; if (k === t) c += " today";
+    const mark = lg && st !== "off" ? sign(lg.delta) : "";
+    h += `<button type="button" class="${c}" data-goday="${k}" aria-label="${fmtLong(k)}"><span>${DAYN[wday(k)]}</span><i></i><b class="num">${mark}</b></button>`;
+  }
+  $("week").innerHTML = h;
+  const y = addDays(t, -1); const ly = S.logs[y];
+  $("weekHint").innerHTML = ly && !ly.win && !ly.off && y >= S.start ? `<button type="button" class="fixhint" data-fixgo="${y}">¿Ayer sí cumpliste? Corrige el día</button>` : "";
+}
+
+function draftToday(){
+  const t = today();
+  if (!S.drafts[t]) S.drafts[t] = {w:false, prot:false, food:null, steps:false, water:false, sleep:false, ex:[]};
+  const d = S.drafts[t];
+  if (d.food === undefined) { d.food = d.junk ? "pase" : null; delete d.junk; }
+  if (!Array.isArray(d.ex)) d.ex = [];
+  return d;
+}
+
+function renderMission(){
+  const t = today(); const p = PLAN[wday(t)]; const log = S.logs[t];
+  $("missionHead").textContent = "Hoy · " + DAYFULL[wday(t)];
+  if (log) {
+    const pn = PLAN[wday(addDays(t, 1))];
+    $("mission").innerHTML = `<div class="closed"><div class="big num ${log.delta >= 0 ? "pos" : "neg"}">${sign(log.delta)}</div>
+      <div><b>${log.win ? "Victoria registrada" : "Derrota registrada"}</b><div class="note" style="margin:2px 0 0">Día cerrado. Vuelve mañana.</div></div></div>
+      <div class="m-head" style="margin-top:22px"><div><div class="m-type">Mañana · ${TYPE_LBL[pn.type]}</div><div class="m-title">${pn.title}</div><div class="m-tag">${pn.tag}</div></div></div>`;
+    return;
+  }
+  const d = draftToday(); const rest = p.type === "descanso";
+  const preview = scoreDay(t, d); let pv = preview.L.reduce((a,x)=>a+x[1], 0);
+  if (preview.win) pv += Math.min(S.streak+1, 10)*2;
+
+  const exH = p.ex.map((e,i)=>`<li><label class="row" for="ex${i}"><input class="sr" type="checkbox" id="ex${i}" data-ex="${i}"${d.ex.includes(i) ? " checked" : ""}><span class="tick" aria-hidden="true"></span><span class="t"><b>${e[0]}<em>${e[1]}</em></b><small>${e[2]}</small></span></label></li>`).join("");
+
+  const wOn = !!d.w;
+  const rows = [`<li><button type="button" class="row" data-k="w" aria-pressed="${wOn}"><span class="tick" aria-hidden="true"></span><span class="t"><b>${rest ? "Descanso activo cumplido" : "Entrenamiento completado"}</b><small>Se marca solo al tachar el 80 % de la lista</small></span><span class="v num">${rest ? "+20" : (wOn ? "+40" : "−50")}</span></button></li>`];
+  ITEMS.forEach(it=>{
+    const on = !!d[it.k]; const v = on || !it.neg ? "+" + it.pos : sign(it.neg);
+    rows.push(`<li><button type="button" class="row" data-k="${it.k}" aria-pressed="${on}"><span class="tick" aria-hidden="true"></span><span class="t"><b>${it.t()}</b><small>${it.s}</small></span><span class="v num">${v}</span></button></li>`);
+  });
+
+  const sel = foodOf(d); const u = weekUsage(t); const wc = weekCount(t);
+  const cupoLeft = CUPOS - u.cupo, libreLeft = LIBRES - u.libre;
+  const opts = [
+    {v:"limpio", t:"Limpio", s:"+10"},
+    {v:"cupo", t:"Mekato", s: cupoLeft > 0 ? "+5 · 1 cupo" : "Sin cupos · −20", bad: cupoLeft <= 0},
+    {v:"libre", t:"Comida libre", s: libreLeft > 0 ? "0 · 1 por semana" : "Ya la usaste · −20", bad: libreLeft <= 0},
+    {v:"pase", t:"Me pasé", s:"−20", bad:true}
+  ];
+  const pips = Array.from({length:CUPOS}, (_,i)=>`<i class="${i < wc.cupo ? "on" : ""}"></i>`).join("");
+  rows.splice(2, 0, `<li class="food"><div class="food-h"><b>Mekato y comida</b><span>Cupos<span class="pips" aria-hidden="true">${pips}</span>${Math.min(wc.cupo, CUPOS)}/${CUPOS} · Comida libre ${wc.libre >= LIBRES ? "usada" : "disponible"}</span></div>
+    <div class="seg" role="radiogroup" aria-label="Mekato y comida de hoy">${opts.map(o=>`<button type="button" role="radio" aria-checked="${sel === o.v}" data-food="${o.v}"${o.bad ? ' class="bad"' : ""}>${o.t}<small>${o.s}</small></button>`).join("")}</div><button type="button" class="link" data-goto="food">¿Me lo puedo comer? Revísalo aquí</button></li>`);
+
+  $("mission").innerHTML = `
+    <div class="m-head"><div><div class="m-type">${TYPE_LBL[p.type]}${p.rep ? " · " + p.rep : ""}</div><div class="m-title">${p.title}</div><div class="m-tag">${p.tag}</div></div>
+      <div class="pot">SR si cierras ahora<b class="num${pv < 0 ? " neg" : " pos"}">${sign(pv)}</b></div></div>
+    <div class="sub">${rest ? "Actividades" : "Ejercicios"}</div>
+    <ul class="list">${exH}</ul>
+    <div class="sub">Hábitos del día</div>
+    <ul class="list">${rows.join("")}</ul>
+    <button type="button" class="cta" id="closeBtn">Cerrar día y registrar</button>
+    <p class="note">Marca lo que vayas cumpliendo y cierra el día en la noche. Si no lo cierras, mañana se cierra solo con lo que marcaste, y si no marcaste nada cuenta como ausencia.</p>`;
+}
+
+/* ---------- Racha y calendario ---------- */
+const now0 = new Date();
+let calY = now0.getFullYear(), calM = now0.getMonth(), calSel = null, yearSel = now0.getFullYear();
+
+let fixOpen = null, fixDraft = null;
+function startFix(k){
+  const lg = S.logs[k]; fixOpen = k;
+  fixDraft = Object.assign({w:false, prot:false, food:null, steps:false, water:false, sleep:false}, lg && lg.d ? lg.d : {});
+}
+function openDay(k, fix){
+  const d = parse(k); calY = d.getFullYear(); calM = d.getMonth(); calSel = k;
+  if (fix) startFix(k); else { fixOpen = null; fixDraft = null; }
+  selectTab("racha"); renderStreak();
+  if (fix) { const el = $("fixBox"); if (el) el.scrollIntoView({block:"start"}); }
+}
+function fixEditor(k){
+  const p = PLAN[wday(k)]; const rest = p.type === "descanso"; const d = fixDraft;
+  const pre = scoreDay(k, d); let pv = pre.L.reduce((a,x)=>a+x[1], 0);
+  if (pre.win) pv += Math.min(runEndingAt(addDays(k,-1)) + 1, 10)*2;
+  const row = (key, label, small)=>`<li><button type="button" class="row" data-fixk="${key}" aria-pressed="${!!d[key]}"><span class="tick" aria-hidden="true"></span><span class="t"><b>${label}</b>${small ? `<small>${small}</small>` : ""}</span></button></li>`;
+  const sel = foodOf(d);
+  const opts = [["limpio","Limpio"],["cupo","Mekato"],["libre","Comida libre"],["pase","Me pasé"]];
+  return `<div class="fix">
+    <div class="m-head" style="margin-top:22px"><div><div class="m-type">Corregir día</div><div class="m-title">${p.title}</div><div class="m-tag">${fmtLong(k)}</div></div><div class="pot">SR del día<b class="num${pv < 0 ? " neg" : " pos"}">${sign(pv)}</b></div></div>
+    <ul class="list">
+      ${row("w", rest ? "Descanso activo cumplido" : "Entrenamiento completado", rest ? "" : "Con el cardio del día")}
+      ${row("prot", "Proteína " + proteinGoal() + " g")}
+      <li class="food"><div class="food-h"><b>Comida</b></div><div class="seg" role="radiogroup" aria-label="Comida de ese día">${opts.map(o=>`<button type="button" role="radio" aria-checked="${sel === o[0]}" data-fixfood="${o[0]}"${o[0] === "pase" ? ' class="bad"' : ""}>${o[1]}</button>`).join("")}</div></li>
+      ${row("steps", "20 min de cardio")}
+      ${row("water", "3 litros de agua")}
+      ${row("sleep", "Dormí 7 horas o más")}
+    </ul>
+    <button type="button" class="cta" id="fixSave">Guardar corrección</button>
+    <button type="button" class="ghost" id="fixCancel">Cancelar</button>
+  </div>`;
+}
+
+function renderStreak(){
+  const t = today();
+  const nextMile = MILES.find(m => m > S.streak);
+  const left = nextMile ? nextMile - S.streak : 0;
+  $("streakHero").innerHTML = `<div><div class="big num">${S.streak}<small>${S.streak === 1 ? "día" : "días"}</small></div>
+      <div class="note" style="margin-top:10px">${nextMile ? `Te ${left === 1 ? "falta 1 día" : "faltan " + left + " días"} para la racha de ${nextMile}` : "Completaste todos los hitos"}</div></div>
+    <div class="side">Mejor racha<b class="num">${S.best}</b></div>`;
+  $("miles").innerHTML = MILES.map(m=>`<div class="mile${S.best >= m ? " on" : ""}${S.streak >= m ? " live" : ""}">${m}<small>días</small></div>`).join("");
+
+  // límites de navegación
+  const s = parse(S.start); const minYM = s.getFullYear()*12 + s.getMonth();
+  const nw = new Date(); const maxYM = nw.getFullYear()*12 + nw.getMonth() + 12;
+  let cur = Math.min(Math.max(calY*12 + calM, minYM), maxYM); calY = Math.floor(cur/12); calM = cur % 12;
+  $("calPrev").disabled = cur <= minYM; $("calNext").disabled = cur >= maxYM;
+  $("calTitle").textContent = MESES[calM] + " " + calY;
+
+  const days = new Date(calY, calM+1, 0).getDate(); const pad = (new Date(calY, calM, 1).getDay()+6) % 7;
+  let h = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map(x=>`<div class="h">${x}</div>`).join("");
+  for (let i=0;i<pad;i++) h += `<span class="c"></span>`;
+  let wins = 0, losses = 0, run = 0, bestRun = 0;
+  for (let day=1; day<=days; day++){
+    const k = ymd(new Date(calY, calM, day)); const st = dayState(k); const wd = wday(k);
+    let cls = "c", aria = "";
+    if (st === "w") {
+      cls += " w"; wins++; run++; bestRun = Math.max(bestRun, run); aria = ", victoria";
+      if (day > 1 && wd !== 1 && dayState(addDays(k,-1)) === "w") cls += " jl";
+      if (day < days && wd !== 0 && dayState(addDays(k,1)) === "w") cls += " jr";
+    } else {
+      run = 0;
+      if (st === "l") { cls += " l"; losses++; aria = ", derrota"; }
+      else if (st === "fut") cls += " fut";
+      else if (st === "out" || st === "off") cls += " out";
+    }
+    if (k === t) { cls += " t"; aria += ", hoy"; }
+    if (k === calSel) cls += " sel";
+    h += `<button type="button" class="${cls}" data-date="${k}" aria-label="${fmtLong(k)}${aria}"><span class="n num">${day}</span></button>`;
+  }
+  $("cal").innerHTML = h;
+  $("calStats").innerHTML = `<span><b class="num">${wins}</b>victorias</span><span><b class="num">${losses}</b>derrotas</span><span><b class="num">${bestRun}</b>racha más larga del mes</span>`;
+
+  const k = calSel || t; const p = PLAN[wday(k)]; const lg = S.logs[k]; const st = dayState(k);
+  let sub, right = "";
+  if (lg && st !== "off") { sub = (lg.win ? "Victoria" : (lg.noShow ? "Ausente" : "Derrota")) + " · " + (lg.title || p.title); right = `<b class="num ${lg.delta >= 0 ? "pos" : "neg"}">${sign(lg.delta)} SR</b>`; }
+  else if (st === "off") sub = "Fuera de temporada";
+  else if (k === t) sub = "Hoy · " + p.title + " · sin cerrar";
+  else if (k > t) sub = "Plan · " + p.title;
+  else sub = "Antes de empezar";
+  if (lg && lg.fixed && st !== "off") sub += " · corregido";
+  $("calDetail").innerHTML = `<div><b>${fmtLong(k)}</b><span>${sub}</span></div>${right}`;
+  const canFix = !!lg && st !== "off" && k < t && k >= S.start && k >= addDays(t, -7);
+  $("fixBox").innerHTML = !canFix ? "" : (fixOpen === k && fixDraft ? fixEditor(k) : `<button type="button" class="ghost" data-fix="${k}">Corregir este día</button>`);
+  renderYear();
+}
+
+function renderYear(){
+  const t = today(); const Y = yearSel;
+  const s = parse(S.start); const nw = new Date();
+  yearSel = Math.min(Math.max(yearSel, s.getFullYear()), nw.getFullYear() + 1);
+  $("yPrev").disabled = yearSel <= s.getFullYear(); $("yNext").disabled = yearSel >= nw.getFullYear() + 1;
+  $("yearTitle").textContent = "Año " + Y;
+  let h = "";
+  for (let m=0; m<12; m++){
+    const days = new Date(Y, m+1, 0).getDate(); const pad = (new Date(Y, m, 1).getDay()+6) % 7;
+    let g = ""; for (let i=0;i<pad;i++) g += `<i class="x"></i>`;
+    let w = 0, played = 0;
+    for (let day=1; day<=days; day++){
+      const k = ymd(new Date(Y, m, day)); const st = dayState(k); let c = "";
+      if (st === "w") { c = "w"; w++; played++; } else if (st === "l") { c = "l"; played++; }
+      if (k === t) c += " t";
+      g += `<i class="${c.trim()}"></i>`;
+    }
+    const cur = Y === calY && m === calM;
+    h += `<button type="button" class="mini${cur ? " cur" : ""}" data-month="${m}" aria-label="Ver ${MESES[m]} ${Y}"><b>${MESES[m]}</b><span class="g" aria-hidden="true">${g}</span><small>${played ? w + " de " + played + " ganados" : "Sin partidas"}</small></button>`;
+  }
+  $("year").innerHTML = h;
+}
+
+/* ---------- Plan ---------- */
+function renderPlan(){
+  const wdT = wday(today()); const order = [1,2,3,4,5,6,0];
+  $("planList").innerHTML = order.map(k=>{
+    const p = PLAN[k];
+    return `<details class="day${k === wdT ? " is-today" : ""}"${k === wdT ? " open" : ""}><summary><span class="dname">${DAYN[k]}</span><span class="dt"><b>${p.title}</b><span>${p.rep ? p.rep + " · " : ""}${p.tag}</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+      <ol>${p.ex.map(e=>`<li>${e[0]}<em>${e[1]}</em><small>${e[2]}</small></li>`).join("")}</ol></details>`;
+  }).join("");
+}
+
+/* ---------- ¿Me lo puedo comer? ---------- */
+const CUPO_KCAL = 200, CUPO_SAT = 5, CUPO_SUGAR = 20;
+const FOOD_EXAMPLES = {
+  mekato: {name:"paquete pequeño de papas", type:"mekato", kcal:140, sat:2.5, sugar:0.5, prot:2, g:28, por:1},
+  comida: {name:"hamburguesa sencilla de comida rápida", type:"comida", kcal:540, sat:10, sugar:9, prot:26, g:220, por:1}
+};
+let foodType = "mekato";
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function num(v){ const n = parseFloat(String(v == null ? "" : v).replace(",", ".")); return isFinite(n) && n >= 0 ? n : null; }
+function fmtN(n){ return (Math.round(n*10)/10).toLocaleString("es"); }
+function satDaily(){ return Math.round(kcalGoal()*0.10/9); }          // 10 % de las calorías
+function mealKcal(){ return Math.round(kcalGoal()*0.30/10)*10; }      // una comida ≈ 30 % del día
+function mealSat(){ return Math.round(satDaily()*0.30*2)/2; }
+const FRACS = [[0.75,"tres cuartos"],[0.66,"dos tercios"],[0.5,"la mitad"],[0.33,"un tercio"]];
+function fracOf(f){ for (const x of FRACS) if (f >= x[0]) return {v:x[0], l:x[1]}; return null; }
+
+function judgeFood(f, opts){
+  const o = opts || {};
+  const por = f.por > 0 ? f.por : 1;
+  const isMk = f.type === "mekato";
+  const kcal = f.kcal * por;
+  const sat = f.sat != null ? f.sat * por : null;
+  const sugar = f.sugar != null ? f.sugar * por : null;
+  const prot = f.prot != null ? f.prot * por : null;
+  const limK = isMk ? CUPO_KCAL : mealKcal(), limS = isMk ? CUPO_SAT : mealSat();
+  const meters = [{label:"Calorías", val:kcal, lim:limK, unit:"kcal"}];
+  if (sat != null) meters.push({label:"Grasa saturada", val:sat, lim:limS, unit:"g"});
+  if (isMk && sugar != null) meters.push({label:"Azúcares", val:sugar, lim:CUPO_SUGAR, unit:"g"});
+  const ratio = Math.max(kcal/limK, sat != null ? sat/limS : 0);
+  const fr = ratio > 1 ? fracOf(1/ratio) : null;
+  const part = fr ? fr.l + (f.g ? ` (unos ${Math.max(5, Math.floor(f.g*por*fr.v/5)*5)} g)` : "") : "";
+  const has = `${fmtN(kcal)} kcal${sat != null ? ` y ${fmtN(sat)} g de grasa saturada` : ""}`;
+  const notes = [];
+  if (sat == null) notes.push("Falta la grasa saturada. Búscala en la tabla para un resultado más preciso.");
+  if (sugar != null && sugar > (isMk ? CUPO_SUGAR : 25)) notes.push(`Tiene bastante azúcar (${fmtN(sugar)} g). Mejor cómelo después del almuerzo o de entrenar.`);
+  if (!isMk && prot != null && prot >= 25) notes.push(`Buena proteína: ${fmtN(prot)} g.`);
+  if (!isMk && prot != null && prot < 10 && kcal >= 300) notes.push(`Poca proteína para tantas calorías (${fmtN(prot)} g). Acompáñalo con pollo, huevo o atún.`);
+  if (!isMk && sat != null && sat > satDaily()/2) notes.push(`Solo esto trae más de la mitad de tu grasa saturada del día (${satDaily()} g).`);
+  let level, title, detail, action = null;
+  if (isMk) {
+    if (ratio <= 1) { level = "si"; title = "Sí, cabe en un cupo"; detail = `Tiene ${has}. Un cupo es hasta ${CUPO_KCAL} kcal y ${CUPO_SAT} g de grasa saturada.`; }
+    else if (fr) { level = "parte"; title = "Solo " + fr.l; detail = `Completo se pasa de un cupo (${CUPO_KCAL} kcal y ${CUPO_SAT} g de grasa saturada). Cómete ${part} y guarda el resto.`; }
+    else { level = "no"; title = "No, se pasa del cupo"; detail = `Tiene ${has}, y un cupo es hasta ${CUPO_KCAL} kcal y ${CUPO_SAT} g.`; }
+    if (!o.ignoreCupos) {
+      const t = today(); const closed = !!S.logs[t];
+      const todayF = closed ? S.logs[t].food : (S.drafts[t] ? foodOf(S.drafts[t]) : "limpio");
+      const u = weekUsage(t); const left = CUPOS - u.cupo;
+      const libreOk = u.libre < LIBRES && todayF !== "libre";
+      if (level !== "no") {
+        if (todayF === "cupo") { level = "no"; title = "Hoy ya usaste tu cupo"; detail = "Es máximo un mekato al día. Guárdalo para otro día."; }
+        else if (left <= 0) { level = "no"; title = "Ya no te quedan cupos"; detail = `Usaste los ${CUPOS} cupos de esta semana. Se reinician el lunes.`; }
+        else {
+          detail += ` Te ${left === 1 ? "queda 1 cupo" : "quedan " + left + " cupos"} esta semana.`;
+          if (!closed) action = {food:"cupo", label: level === "parte" ? "Me como esa parte · usar 1 cupo" : "Me lo como hoy · usar 1 cupo"};
+        }
+      }
+      if (level === "no" && libreOk) { detail += " Puede ir en tu comida libre de la semana."; if (!closed) action = {food:"libre", label:"Usarlo como comida libre"}; }
+    }
+  } else {
+    if (ratio <= 1) { level = "si"; title = "Sí, te lo puedes comer"; detail = `Cabe en una comida de tu plan: hasta ${mealKcal()} kcal y ${fmtN(mealSat())} g de grasa saturada.`; }
+    else if (fr && fr.v >= 0.5) { level = "parte"; title = "Con moderación"; detail = `Se pasa un poco de una comida de tu plan (${mealKcal()} kcal y ${fmtN(mealSat())} g de grasa saturada). Come ${part} o acompáñalo con ensalada en vez de más harinas.`; }
+    else { level = "no"; title = "Mejor no"; detail = `Tiene ${has}, mucho más de lo que debería tener una comida de tu plan (${mealKcal()} kcal y ${fmtN(mealSat())} g). Si se te antoja mucho, que sea tu comida libre de la semana.`; }
+  }
+  return {level, title, detail, notes, meters, action};
+}
+
+const V_ICON = {si:'<path d="M5 12.5l4.5 4.5L19 7.5"/>', parte:'<path d="M6 12h12"/>', no:'<path d="M7 7l10 10M17 7L7 17"/>'};
+function readFoodForm(){
+  return {name:$("fName").value.trim().slice(0,60), type:foodType, kcal:num($("fKcal").value), sat:num($("fSat").value), sugar:num($("fSugar").value), prot:num($("fProt").value), g:num($("fGrams").value), por:num($("fPor").value) || 1};
+}
+function meterHTML(m){
+  const r = m.lim > 0 ? m.val/m.lim : 0;
+  const col = r <= 1 ? "var(--pos)" : (r <= 1.5 ? "var(--warn)" : "var(--neg)");
+  return `<div><div class="ml"><span>${m.label}</span><span><b class="num">${fmtN(m.val)}</b> de ${fmtN(m.lim)} ${m.unit}</span></div><div class="mb"><span style="width:${Math.min(100, Math.round(r*100))}%;background:${col}"></span></div></div>`;
+}
+function renderFood(){
+  document.querySelectorAll("[data-ftype]").forEach(b=>b.setAttribute("aria-checked", String(b.dataset.ftype === foodType)));
+  const f = readFoodForm(); const example = f.kcal == null;
+  const item = example ? FOOD_EXAMPLES[foodType] : f;
+  const j = judgeFood(item, {ignoreCupos: example});
+  const who = example ? "Ejemplo · " + item.name : (f.name ? esc(f.name) : (foodType === "mekato" ? "Tu mekato" : "Tu comida"));
+  const v = $("verdict");
+  v.className = "verdict " + j.level + (example ? " example" : "");
+  v.innerHTML = `<div class="v-k">${who}</div>
+    <div class="v-t"><i><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${V_ICON[j.level]}</svg></i><span>${j.title}</span></div>
+    <p class="v-d">${j.detail}</p>
+    <div class="meters">${j.meters.map(meterHTML).join("")}</div>
+    ${j.notes.length ? `<ul class="v-notes">${j.notes.map(n=>`<li>${n}</li>`).join("")}</ul>` : ""}`;
+  $("foodActions").innerHTML = example
+    ? `<p class="note">Escribe las calorías y la grasa saturada de tu mekato o comida para ver tu resultado.</p>`
+    : `${j.action ? `<button type="button" class="cta" data-eat="${j.action.food}">${j.action.label}</button>` : ""}<button type="button" class="ghost" id="saveFood">Guardar en mi lista</button>`;
+  renderSaved();
+}
+function renderSaved(){
+  const list = S.foods || [];
+  $("savedFoods").innerHTML = list.length ? `<div class="saved">${list.map((it,i)=>{
+    const j = judgeFood(it, {ignoreCupos:true}); const p = it.por || 1;
+    const col = j.level === "si" ? "var(--pos)" : (j.level === "parte" ? "var(--warn)" : "var(--neg)");
+    const tag = it.type === "mekato" ? (j.level === "si" ? "Cabe en un cupo" : (j.level === "parte" ? j.title : "No cabe en un cupo")) : (j.level === "si" ? "Buena opción" : (j.level === "parte" ? "Con moderación" : "Mejor no"));
+    return `<div class="sv"><button type="button" class="sv-main" data-load="${i}"><i style="background:${col}"></i><span style="min-width:0"><b>${esc(it.name)}</b><small>${fmtN(it.kcal*p)} kcal${it.sat != null ? " · " + fmtN(it.sat*p) + " g de grasa sat." : ""} · ${tag}</small></span></button><button type="button" class="sv-del" data-del="${i}" aria-label="Borrar ${esc(it.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7l10 10M17 7L7 17"/></svg></button></div>`;
+  }).join("")}</div>` : `<div class="empty">Aquí aparecen los alimentos que guardes, para revisarlos con un toque la próxima vez.</div>`;
+}
+function saveFoodItem(f){
+  if (f.kcal == null) { toast("Escribe al menos las calorías"); return false; }
+  const it = {name: f.name || (f.type === "mekato" ? "Mekato" : "Comida"), type:f.type, kcal:f.kcal, sat:f.sat, sugar:f.sugar, prot:f.prot, g:f.g, por:f.por};
+  S.foods = (S.foods || []).filter(x=>!(x.type === it.type && String(x.name).toLowerCase() === it.name.toLowerCase()));
+  S.foods.unshift(it); if (S.foods.length > 40) S.foods.length = 40;
+  save(); return true;
+}
+
+/* ---------- Escanear la etiqueta con la cámara ---------- */
+// Claude lee la foto de la tabla nutricional (capacidad "sample"). Fuera de Claude el botón no aparece.
+const SCAN_PROMPT = [
+  "Lee la tabla nutricional de la foto (empaque de un alimento, normalmente de Colombia o Latinoamérica).",
+  "Responde SOLO con un objeto JSON, sin texto adicional, con estas claves:",
+  '{"name": string|null, "kcal": number|null, "sat": number|null, "sugar": number|null, "prot": number|null, "g": number|null, "servings": number|null, "per": "porcion"|"100g", "ok": boolean, "note": string|null}',
+  "- kcal: calorías (energía en kcal) por porción. Si solo aparece en kJ, conviértela a kcal dividiendo por 4,184.",
+  "- sat: grasa saturada en gramos por porción.",
+  "- sugar: azúcares totales en gramos por porción.",
+  "- prot: proteína en gramos por porción.",
+  "- g: tamaño de la porción en gramos o mililitros (por ejemplo, \"1 paquete (28 g)\" es 28).",
+  "- servings: porciones por envase, si aparece.",
+  "- name: nombre del producto si se ve en la foto; si no, null.",
+  "- Usa la columna por porción. Si la tabla solo trae valores por 100 g, usa esos, pon per=\"100g\" y g=100.",
+  "- Si un dato no aparece o no se lee con claridad, pon null. No inventes números.",
+  "- ok: false si la foto no muestra una tabla nutricional legible; en note explica en una frase corta, en español, qué falta.",
+  "- Usa punto decimal en los números.",
+  'Ejemplo: {"name":"Papas de limón","kcal":140,"sat":2.5,"sugar":0.5,"prot":2,"g":28,"servings":1,"per":"porcion","ok":true,"note":null}'
+].join("\n");
+let sampleFn = null, scanCtl = null, scanTypes = [], scanMaxBytes = 20e6;
+
+(async ()=>{
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const s = await window.claude.use("sample"); if (!s) return;
+    const lim = await s.limits().catch(()=>null);
+    if (!lim || !lim.images) return;
+    sampleFn = s;
+    scanTypes = Array.isArray(lim.images.mediaTypes) ? lim.images.mediaTypes : [];
+    if (lim.images.maxInputBytes) scanMaxBytes = lim.images.maxInputBytes;
+    if (scanTypes.length) { $("scanCam").accept = scanTypes.join(","); $("scanFile").accept = scanTypes.join(","); }
+    $("scanBox").hidden = false;
+    $("foodIntro").textContent = "Escanea la tabla nutricional del empaque o copia los datos de la columna por porción, y te digo si cabe en tu plan.";
+  } catch(e){}
+})();
+
+async function prepImage(file){
+  const okType = !scanTypes.length || scanTypes.indexOf(file.type) >= 0;
+  if (okType && file.size <= scanMaxBytes) return file;
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width*k); c.height = Math.round(bmp.height*k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return await new Promise((res, rej)=>c.toBlob(b=>b ? res(b) : rej(new Error("blob")), "image/jpeg", 0.88));
+}
+function scanMsg(kind, text, servings){
+  const st = $("scanStatus"); st.hidden = false; st.className = "scan-status " + kind; st.textContent = "";
+  const p = document.createElement("span"); p.textContent = text; st.appendChild(p);
+  if (servings) { const b = document.createElement("button"); b.type = "button"; b.className = "link"; b.dataset.whole = String(servings); b.textContent = `El empaque trae ${fmtN(servings)} porciones · me lo como entero`; st.appendChild(b); }
+}
+async function scanLabel(file){
+  if (!file || !sampleFn || scanCtl) return;
+  scanCtl = new AbortController();
+  const st = $("scanStatus"); st.hidden = false; st.className = "scan-status";
+  st.innerHTML = `<span class="spin" aria-hidden="true"></span><span>Leyendo la etiqueta… puede tardar unos segundos.</span><button type="button" class="link" id="scanStop">Cancelar</button>`;
+  $("scanBtn").disabled = true;
+  try {
+    const img = await prepImage(file);
+    const r = await sampleFn.json(SCAN_PROMPT, {images: img, modelTier: "default", signal: scanCtl.signal});
+    const ok = r && typeof r === "object" && r.ok !== false && num(r.kcal) != null;
+    if (!ok) { scanMsg("bad", (r && typeof r.note === "string" && r.note) || "No pude leer las calorías. Toma la foto más cerca, de frente y con buena luz."); return; }
+    const put = (id, v)=>{ const n = num(v); $(id).value = n == null ? "" : String(Math.round(n*10)/10).replace(".", ","); };
+    put("fKcal", r.kcal); put("fSat", r.sat); put("fSugar", r.sugar); put("fProt", r.prot); put("fGrams", r.g); $("fPor").value = "1";
+    if (!$("fName").value.trim() && typeof r.name === "string") $("fName").value = r.name.slice(0, 60);
+    renderFood();
+    let msg = "Listo. Revisa que los datos coincidan con el empaque.";
+    if (r.per === "100g") msg += " La etiqueta solo traía valores por 100 g.";
+    if (num(r.sat) == null) msg += " No encontré la grasa saturada; escríbela si la ves.";
+    const sv = num(r.servings);
+    scanMsg("ok", msg, sv && sv >= 1.5 ? sv : null);
+  } catch (e) {
+    const code = e && e.code;
+    if (code === "cancelled") $("scanStatus").hidden = true;
+    else if (["not_granted","sampling_disabled","images_unavailable","not_declared","capability_disabled","capability_removed"].indexOf(code) >= 0) {
+      scanMsg("bad", "El escaneo no está disponible aquí. Escribe los datos a mano.");
+      $("scanBtn").hidden = true; $("scanPick").hidden = true;
+    }
+    else if (code === "rate_limited") scanMsg("bad", "Llegaste al límite de uso por ahora. Intenta más tarde o escribe los datos a mano.");
+    else if (code === "image_rejected") scanMsg("bad", "No pude abrir esa foto. Toma otra o elige una en JPG o PNG.");
+    else if (code === "session_expired") scanMsg("bad", "Tu sesión de Claude se cerró. Vuelve a iniciar sesión y escanea otra vez.");
+    else scanMsg("bad", "No pude leer la etiqueta. Intenta otra vez con más luz o escribe los datos a mano.");
+  } finally {
+    scanCtl = null; $("scanBtn").disabled = false;
+    $("scanCam").value = ""; $("scanFile").value = "";
+  }
+}
+
+/* ---------- Historial ---------- */
+function lineChart(points, o){
+  const W = 340, H = 140, pl = 40, pr = 8, pt = 8, pb = 20;
+  if (points.length < 2) return `<div class="empty">${o.empty}</div>`;
+  const ys = points.map(p=>p.y); let lo = Math.min(...ys), hi = Math.max(...ys);
+  if (o.zero) lo = 0;
+  const span = o.minSpan || 10;
+  if (hi - lo < span) { const m = (hi+lo)/2; lo = m - span/2; hi = m + span/2; if (o.zero && lo < 0) { hi -= lo; lo = 0; } }
+  const n = points.length - 1;
+  const X = i => pl + (W-pl-pr) * (i/n);
+  const Y = v => pt + (H-pt-pb) * (1 - (v-lo)/(hi-lo));
+  const d = points.map((p,i)=>(i ? "L" : "M") + X(i).toFixed(1) + " " + Y(p.y).toFixed(1)).join(" ");
+  const area = d + ` L${X(n).toFixed(1)} ${H-pb} L${X(0).toFixed(1)} ${H-pb} Z`;
+  const ticks = [lo, (lo+hi)/2, hi].map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--line)"/><text x="${pl-8}" y="${(Y(v)+3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)">${o.fmt(v)}</text>`).join("");
+  const last = points[n];
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.aria}">
+    <defs><linearGradient id="${o.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${o.color}" stop-opacity=".22"/><stop offset="1" stop-color="${o.color}" stop-opacity="0"/></linearGradient></defs>
+    ${ticks}
+    <path d="${area}" fill="url(#${o.id})"/>
+    <path d="${d}" fill="none" stroke="${o.color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${X(n).toFixed(1)}" cy="${Y(last.y).toFixed(1)}" r="3.5" fill="${o.color}"/>
+    <text x="${pl}" y="${H-4}" font-size="10" fill="var(--muted)">${points[0].label}</text>
+    <text x="${W-pr}" y="${H-4}" font-size="10" fill="var(--muted)" text-anchor="end">${last.label}</text>
+  </svg>`;
+}
+
+function renderHist(){
+  const dates = Object.keys(S.logs).sort();
+  const pts = [{y:0, label:fmt(addDays(S.start,-1))}].concat(dates.map(k=>({y:S.logs[k].sr, label:fmt(k)})));
+  $("srChart").innerHTML = `<div class="lbl"><span>SR por día</span><span>Pico ${S.peak.toLocaleString("es")}</span></div>` +
+    lineChart(pts.slice(-60), {id:"gsr", color:"var(--accent)", zero:true, minSpan:300, fmt:v=>Math.round(v).toLocaleString("es"), aria:"SR por día", empty:"Cierra tu primer día para ver la curva."});
+
+  const ms = S.measures.filter(m=>m.kg); const ws = S.measures.filter(m=>m.waist);
+  let mh = `<div class="lbl"><span>Peso (kg)</span><span>${ms.length ? ms[ms.length-1].kg + " kg" : ""}</span></div>` +
+    lineChart(ms.map(m=>({y:m.kg, label:fmt(m.date)})), {id:"gkg", color:"var(--fg2)", minSpan:3, fmt:v=>v.toFixed(1), aria:"Peso", empty:"Registra tu peso cada semana para ver la tendencia."});
+  if (ws.length) mh += `<div class="lbl" style="margin-top:18px"><span>Cintura (cm)</span><span>${ws[ws.length-1].waist} cm</span></div>` +
+    lineChart(ws.map(m=>({y:m.waist, label:fmt(m.date)})), {id:"gws", color:"var(--accent)", minSpan:4, fmt:v=>v.toFixed(1), aria:"Cintura", empty:"Registra tu cintura otra semana para ver la tendencia."});
+  $("mChart").innerHTML = mh;
+  $("mList").innerHTML = S.measures.slice().reverse().slice(0,8).map(m=>`<div><span>${fmt(m.date)}</span><span class="num">${m.kg ? m.kg + " kg" : "—"} · ${m.waist ? m.waist + " cm" : "—"}</span></div>`).join("");
+
+  const rows = dates.slice().reverse().slice(0,60);
+  $("matches").innerHTML = rows.length ? rows.map(k=>{
+    const g = S.logs[k]; const r = rankOf(g.sr);
+    const res = g.win ? "Victoria" : (g.noShow ? "Ausente" : "Derrota");
+    return `<details class="match ${g.win ? "win" : "loss"}"><summary><i class="res"></i><span class="md"><b>${fmt(k)} · ${res}</b>${g.title || PLAN[wday(k)].title} · ${r.label}</span><span class="dl num ${g.delta >= 0 ? "pos" : "neg"}">${sign(g.delta)}</span></summary>
+      <ul>${g.L.map(x=>`<li><span>${x[0]}</span><span class="num ${x[1] > 0 ? "pos" : x[1] < 0 ? "neg" : ""}">${x[1] === 0 ? "0" : sign(x[1])}</span></li>`).join("")}</ul></details>`;
+  }).join("") : `<div class="empty" style="margin-top:14px">Aún no hay partidas. Cierra tu primer día desde el Lobby.</div>`;
+}
+
+/* ---------- Briefing ---------- */
+function renderBrief(){
+  const kg = latestKg(); const P = proteinGoal(), K = kcalGoal(); const F = Math.round(kg*0.8/5)*5; const C = Math.max(0, Math.round((K - P*4 - F*9)/4/5)*5);
+  $("macros").innerHTML = `<div><b class="num">${K}</b><span>kcal</span></div><div><b class="num">${P}</b><span>proteína g</span></div><div><b class="num">${C}</b><span>carbos g</span></div><div><b class="num">${F}</b><span>grasa g</span></div>`;
+  $("macroNote").textContent = `Calculado con tu último peso (${kg} kg). Es un punto de partida: si en 2 semanas la cintura no baja, quita 150 kcal, sobre todo de carbos. Si te sientes sin fuerza en el gimnasio, suma 100 kcal.`;
+  const wc = weekCount(today());
+  $("mekatoCount").textContent = `Esta semana llevas ${Math.min(wc.cupo, CUPOS)} de ${CUPOS} cupos de mekato y tu comida libre está ${wc.libre >= LIBRES ? "usada" : "disponible"}. Se reinician el lunes.`;
+  $("tierGrid").innerHTML = TIERS.map((T,i)=>`<div>${emblem(i, T.divs.length-1, "tier-emb")}<b>${T.name}</b><span class="num">${T.min.toLocaleString("es")}+</span></div>`).join("");
+}
+
+function renderSetup(){
+  const need = !S.measures.some(m=>m.kg);
+  $("setup").innerHTML = need ? `<div class="setup"><h3>Empieza tu temporada</h3><p class="note" style="margin-top:2px">Escribe tu peso para calcular tus calorías y tu proteína del día.</p>
+    <form class="form" id="setupForm"><label for="setupKg">Peso (kg)<input id="setupKg" type="number" step="0.1" inputmode="decimal" placeholder="75.0"></label><button type="submit">Empezar</button></form></div>` : "";
+}
+
+function render(){ applyAccent(); renderSetup(); renderRank(); renderWeek(); renderMission(); renderStreak(); renderPlan(); renderHist(); renderBrief(); renderFood(); }
+
+/* ---------- Avisos ---------- */
+let toastT;
+function toast(msg){ const el = $("toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove("show"), 2200); }
+function refocus(sel){ const el = document.querySelector(sel); if (el) { try { el.focus({preventScroll:true}); } catch(_){} } }
+
+const queue = [];
+function showModal(html){ queue.push(html); if ($("modal").hidden) nextModal(); }
+function nextModal(){
+  const h = queue.shift(); if (!h) { $("modal").hidden = true; return; }
+  $("modalIn").innerHTML = h + `<button type="button" class="cta" id="modalOk">Continuar</button>`;
+  $("modal").hidden = false; $("modalOk").focus();
+}
+$("modal").addEventListener("click", e=>{ if (e.target.id === "modalOk") nextModal(); });
+
+function announce(ev){
+  const {rb, ra} = ev;
+  if (ra.t > rb.t || (ra.t === rb.t && ra.d > rb.d)) {
+    const tierUp = ra.t > rb.t;
+    showModal(`${emblem(ra.t, ra.d)}<div class="modal-k">${tierUp ? "Nuevo rango" : "Ascenso de división"}</div><div class="modal-t">${ra.label}</div><div class="modal-d">${tierUp ? "Ganaste 3 escudos. Te protegen de bajar de " + TIERS[ra.t].name + " si fallas." : "Sigue así. Cada día cuenta."}</div>`);
+  } else if (ra.t < rb.t || (ra.t === rb.t && ra.d < rb.d)) {
+    showModal(`${emblem(ra.t, ra.d)}<div class="modal-k neg">Bajaste de rango</div><div class="modal-t">${ra.label}</div><div class="modal-d">Perdiste ${Math.abs(ev.delta)} SR. Mañana puedes recuperarlo: entrena, come bien y vuelve a subir.</div>`);
+  } else if (ev.shieldUsed) {
+    showModal(`${emblem(ra.t, ra.d)}<div class="modal-k">Escudo usado</div><div class="modal-t">${ra.label}</div><div class="modal-d">Un escudo evitó que bajaras de rango. Te quedan ${S.shields}.</div>`);
+  }
+  if (ev.milestone) showModal(`<div class="big-streak num">${ev.milestone}</div><div class="modal-k">Hito de racha desbloqueado</div><div class="modal-t win">${ev.milestone} días seguidos</div><div class="modal-d">${MILE_MSG[ev.milestone] || "Sigue así."}</div>`);
+}
+
+/* ---------- Interacción ---------- */
+function selectTab(v){
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected", b.dataset.v === v));
+  document.querySelectorAll(".view").forEach(s=>s.hidden = !(s.id === "v-" + v || (v === "racha" && s.id === "v-hist")));
+  try { localStorage.setItem(KEY + ".tab", v); } catch(_){}
+  if (v === "food") renderFood();
+  if (v === "top") openTop();
+  window.scrollTo(0, 0);
+}
+
+document.addEventListener("error", e=>{
+  const img = e.target;
+  if (!img || img.tagName !== "IMG" || !img.classList.contains("rank-img")) return;
+  logosOK = false;
+  const holder = document.createElement("span");
+  holder.innerHTML = emblemSvg(Number(img.dataset.t), Number(img.dataset.d), img.dataset.cls);
+  if (holder.firstElementChild) img.replaceWith(holder.firstElementChild);
+}, true);
+
+document.addEventListener("click", e=>{
+  const tp = e.target.closest("[data-top]");
+  if (tp) { topAction(tp.dataset.top, tp); return; }
+  if (e.target.closest("#scanStop")) { if (scanCtl) scanCtl.abort(); return; }
+  const wh = e.target.closest("[data-whole]");
+  if (wh) { $("fPor").value = String(num(wh.dataset.whole) || 1).replace(".", ","); renderFood(); toast("Calculado para el empaque entero"); return; }
+  const ft = e.target.closest("[data-ftype]");
+  if (ft) { foodType = ft.dataset.ftype; renderFood(); refocus(`[data-ftype="${foodType}"]`); return; }
+  const eat = e.target.closest("[data-eat]");
+  if (eat) {
+    const t = today(); if (S.logs[t]) { toast("El día de hoy ya está cerrado"); return; }
+    const kind = eat.dataset.eat; const f = readFoodForm();
+    if (f.kcal != null) saveFoodItem(f);
+    const d = draftToday(); d.food = kind; save(); renderMission(); renderBrief(); renderFood();
+    toast(kind === "cupo" ? "Cupo de mekato usado hoy" : "Comida libre marcada hoy");
+    return;
+  }
+  if (e.target.closest("#saveFood")) { if (saveFoodItem(readFoodForm())) { renderSaved(); toast("Guardado en tu lista"); } return; }
+  const ld = e.target.closest("[data-load]");
+  if (ld) {
+    const it = (S.foods || [])[Number(ld.dataset.load)]; if (!it) return;
+    foodType = it.type === "comida" ? "comida" : "mekato";
+    const put = (id, v)=>{ $(id).value = v == null ? "" : String(v).replace(".", ","); };
+    $("fName").value = it.name || ""; put("fKcal", it.kcal); put("fSat", it.sat); put("fSugar", it.sugar); put("fProt", it.prot); put("fGrams", it.g); put("fPor", it.por || 1);
+    renderFood(); window.scrollTo({top:0, behavior:"smooth"}); return;
+  }
+  const dl = e.target.closest("[data-del]");
+  if (dl) { const i = Number(dl.dataset.del); if (S.foods && S.foods[i]) { S.foods.splice(i, 1); save(); renderSaved(); toast("Borrado de tu lista"); } return; }
+  const gd = e.target.closest("[data-goday]");
+  if (gd) { openDay(gd.dataset.goday, false); return; }
+  const fg = e.target.closest("[data-fixgo]");
+  if (fg) { openDay(fg.dataset.fixgo, true); return; }
+  const fx = e.target.closest("[data-fix]");
+  if (fx) { startFix(fx.dataset.fix); renderStreak(); refocus('[data-fixk="w"]'); return; }
+  const fk = e.target.closest("[data-fixk]");
+  if (fk && fixDraft) { const key = fk.dataset.fixk; fixDraft[key] = !fixDraft[key]; renderStreak(); refocus(`[data-fixk="${key}"]`); return; }
+  const ff = e.target.closest("[data-fixfood]");
+  if (ff && fixDraft) { fixDraft.food = ff.dataset.fixfood; renderStreak(); refocus(`[data-fixfood="${fixDraft.food}"]`); return; }
+  if (e.target.closest("#fixCancel")) { fixOpen = null; fixDraft = null; renderStreak(); return; }
+  if (e.target.closest("#fixSave")) {
+    const k = fixOpen; if (!k || !fixDraft) return;
+    const ev = correctDay(k, fixDraft); fixOpen = null; fixDraft = null;
+    save(); render();
+    if (ev) { toast("Día corregido · " + sign(ev.delta) + " SR"); announce(ev); }
+    return;
+  }
+  const tab = e.target.closest(".tab");
+  if (tab) { selectTab(tab.dataset.v); return; }
+  const go = e.target.closest("[data-goto]");
+  if (go) { selectTab(go.dataset.goto); return; }
+  const row = e.target.closest(".row[data-k]");
+  if (row) { const d = draftToday(); const k = row.dataset.k; d[k] = !d[k]; save(); renderMission(); refocus(`.row[data-k="${k}"]`); return; }
+  const fb = e.target.closest(".seg [data-food]");
+  if (fb) { const d = draftToday(); const v = fb.dataset.food; d.food = v; save(); renderMission(); renderBrief(); refocus(`.seg [data-food="${v}"]`); return; }
+  if (e.target.closest("#closeBtn")) {
+    const t = today(); if (S.logs[t]) return;
+    const ev = closeDay(t, draftToday(), false); save(); render();
+    toast(sign(ev.delta) + " SR · " + (ev.win ? "Victoria" : "Derrota"));
+    announce(ev); window.scrollTo({top:0, behavior:"smooth"}); return;
+  }
+  const cn = e.target.closest("[data-cal]");
+  if (cn) { const ym = calY*12 + calM + Number(cn.dataset.cal); calY = Math.floor(ym/12); calM = ym % 12; calSel = null; fixOpen = null; fixDraft = null; renderStreak(); return; }
+  const cell = e.target.closest(".c[data-date]");
+  if (cell) { calSel = cell.dataset.date; if (fixOpen !== calSel) { fixOpen = null; fixDraft = null; } renderStreak(); refocus(`.c[data-date="${calSel}"]`); return; }
+  const yn = e.target.closest("[data-year]");
+  if (yn) { yearSel += Number(yn.dataset.year); renderYear(); return; }
+  const mini = e.target.closest(".mini[data-month]");
+  if (mini) { calY = yearSel; calM = Number(mini.dataset.month); calSel = null; renderStreak(); $("calTitle").scrollIntoView({behavior:"smooth", block:"center"}); return; }
+});
+
+$("foodForm").addEventListener("input", renderFood);
+$("foodForm").addEventListener("submit", e=>e.preventDefault());
+$("scanBtn").addEventListener("click", ()=>$("scanCam").click());
+$("scanPick").addEventListener("click", ()=>$("scanFile").click());
+$("scanCam").addEventListener("change", e=>scanLabel(e.target.files && e.target.files[0]));
+$("scanFile").addEventListener("change", e=>scanLabel(e.target.files && e.target.files[0]));
+
+document.addEventListener("change", e=>{
+  const ex = e.target.closest("input[data-ex]"); if (!ex) return;
+  const d = draftToday(); const i = Number(ex.dataset.ex);
+  d.ex = d.ex.filter(x=>x !== i); if (ex.checked) d.ex.push(i);
+  // Tachar la caminata o el cardio de la lista también marca el hábito de cardio.
+  const exName = (PLAN[wday(today())].ex[i] || [""])[0];
+  if (ex.checked && /^(Cardio|Caminata)/.test(exName)) d.steps = true;
+  const n = PLAN[wday(today())].ex.length;
+  if (d.ex.length >= Math.ceil(n*0.8)) d.w = true; else if (d.ex.length === 0) d.w = false;
+  save(); renderMission(); refocus("#ex" + i);
+});
+
+$("mForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const kg = parseFloat($("mKg").value), w = parseFloat($("mWaist").value);
+  const okKg = kg > 30 && kg < 250, okW = w > 40 && w < 200;
+  if (!okKg && !okW) { toast("Escribe un peso o una cintura válidos"); return; }
+  const t = today(); const ex = S.measures.find(m=>m.date === t);
+  const rec = ex || {date:t, kg:null, waist:null};
+  if (okKg) rec.kg = Math.round(kg*10)/10;
+  if (okW) rec.waist = Math.round(w*2)/2;
+  if (!ex) S.measures.push(rec);
+  let msg = "Medidas guardadas";
+  if (!S.lastMeasureBonus || (parse(t) - parse(S.lastMeasureBonus)) / 864e5 >= 6) {
+    const before = S.sr; S.sr += 15; S.peak = Math.max(S.peak, S.sr); S.lastMeasureBonus = t; msg = "+15 SR · Reporte semanal";
+    const rb = rankOf(before), ra = rankOf(S.sr); if (ra.t > rb.t) S.shields = 3; announce({rb, ra, delta:15});
+  }
+  $("mKg").value = ""; $("mWaist").value = "";
+  save(); render(); toast(msg);
+});
+
+let resetArmed = false, resetT;
+$("resetBtn").addEventListener("click", ()=>{
+  if (!resetArmed) { resetArmed = true; $("resetBtn").textContent = "Toca otra vez para borrar todo"; resetT = setTimeout(()=>{ resetArmed = false; $("resetBtn").textContent = "Reiniciar temporada"; }, 4000); return; }
+  clearTimeout(resetT); resetArmed = false; $("resetBtn").textContent = "Reiniciar temporada";
+  S = fresh(); calSel = null; save(); render(); toast("Temporada reiniciada · Bronce I");
+});
+
+/* ---------- Registro inicial, copia de seguridad e instalación ---------- */
+document.addEventListener("submit", async e=>{
+  if (!e.target || e.target.id !== "nickForm") return;
+  e.preventDefault();
+  const n = cleanNick($("nickIn").value);
+  if (n.length < 2) { toast("El apodo debe tener al menos 2 letras o números"); return; }
+  S.nick = n; topEdit = false; lastPushSig = ""; save(); clearTimeout(pushTimer); topCache = null; renderTop();
+  const ok = await pushRank();
+  if (!ok) toast("No pude conectarme al top. Intenta de nuevo en un momento.");
+  loadTop();
+});
+
+document.addEventListener("submit", e=>{
+  if (!e.target || e.target.id !== "setupForm") return;
+  e.preventDefault();
+  const kg = parseFloat($("setupKg").value);
+  if (!(kg > 30 && kg < 250)) { toast("Escribe un peso válido"); return; }
+  const v = Math.round(kg*10)/10;
+  S.measures.push({date: today(), kg: v, waist: null});
+  save(); render(); toast("Metas calculadas para " + v + " kg");
+});
+
+function toB64(str){ const bytes = new TextEncoder().encode(str); let bin = ""; for (let i=0;i<bytes.length;i+=0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i+0x8000)); return btoa(bin); }
+function fromB64(b64){ const bin = atob(b64); const bytes = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i); return new TextDecoder().decode(bytes); }
+
+$("exportBtn").addEventListener("click", ()=>{
+  const code = "RF1." + toB64(JSON.stringify(S));
+  const box = $("backupBox"); box.value = code;
+  const manual = ()=>{ box.focus(); box.select(); toast("Selecciona el código y cópialo"); };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(()=>toast("Código copiado"), manual);
+    else manual();
+  } catch(_) { manual(); }
+});
+
+let importArmed = false, importT;
+$("importBtn").addEventListener("click", ()=>{
+  const raw = $("backupBox").value.replace(/\s+/g, "");
+  let data = null;
+  try { if (raw.indexOf("RF1.") === 0) data = JSON.parse(fromB64(raw.slice(4))); } catch(_) { data = null; }
+  if (!data || data.v !== 1 || typeof data.sr !== "number" || !data.logs || typeof data.logs !== "object" || !Array.isArray(data.measures)) { toast("Ese código no es válido"); return; }
+  if (!importArmed) {
+    importArmed = true; $("importBtn").textContent = "Toca otra vez para reemplazar tu progreso";
+    importT = setTimeout(()=>{ importArmed = false; $("importBtn").textContent = "Restaurar desde el código"; }, 4000);
+    return;
+  }
+  clearTimeout(importT); importArmed = false; $("importBtn").textContent = "Restaurar desde el código";
+  S = data; migrate(); calSel = null; $("backupBox").value = "";
+  save(); boot(); toast("Progreso restaurado · " + rankOf(S.sr).label);
+});
+
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); installEvt = e; $("installBtn").hidden = false; });
+window.addEventListener("appinstalled", ()=>{ installEvt = null; $("installBtn").hidden = true; toast("App instalada"); });
+$("installBtn").addEventListener("click", async ()=>{
+  if (!installEvt) return;
+  installEvt.prompt();
+  try { await installEvt.userChoice; } catch(_){}
+  installEvt = null; $("installBtn").hidden = true;
+});
+try {
+  const standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+  if (standalone && navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+} catch(_){}
+
+/* ---------- Arranque ---------- */
+function boot(){
+  const evs = catchUp(); if (evs.length) save(); else schedulePush();
+  render();
+  evs.forEach(announce);
+  if (evs.length) toast(evs.length === 1 ? "1 día sin cerrar procesado" : evs.length + " días sin cerrar procesados");
+}
+try { let tb = localStorage.getItem(KEY + ".tab"); if (tb === "hist") tb = "racha"; if (tb && document.querySelector(`.tab[data-v="${tb}"]`)) selectTab(tb); } catch(_){}
+boot();
+
+let lastDay = today();
+function dayCheck(){ if (today() !== lastDay) { lastDay = today(); boot(); } }
+setInterval(dayCheck, 60000);
+document.addEventListener("visibilitychange", ()=>{ if (!document.hidden) dayCheck(); });
+
+// Nube privada por usuario
+(async ()=>{
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    if (!db || !user) return;
+    const id = await user.id(); if (!id) return;
+    dbDoc = db.collection("data/users/" + id).doc("ranked");
+    const snap = await dbDoc.get();
+    const remote = snap.exists ? JSON.parse(JSON.stringify(snap.data())) : null;
+    if (remote && remote.v === 1 && (remote.updatedAt || 0) > (S.updatedAt || 0)) {
+      S = remote; migrate();
+      try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+      boot();
+    } else if (S.updatedAt) {
+      pushRemote();
+    }
+    setSync(true);
+    // Si cambias algo en otro dispositivo (o se corrige un día), esta pantalla lo recibe.
+    dbDoc.onSnapshot(s2=>{
+      try {
+        if (!s2.exists) return;
+        const r2 = JSON.parse(JSON.stringify(s2.data()));
+        if (r2 && r2.v === 1 && (r2.updatedAt || 0) > (S.updatedAt || 0)) {
+          S = r2; migrate();
+          try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+          boot();
+        }
+      } catch(e){}
+    }, ()=>{});
+  } catch(e) {}
+})();
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  addEventListener("load", function () { navigator.serviceWorker.register("./sw.js").catch(function () {}); });
+}
+</script>
+</body>
+</html>
