@@ -1,5 +1,5 @@
 // Service worker de Ranked Fit: la app abre sin internet y se actualiza sola cuando hay conexión.
-const VERSION = "rf-1795672228631";
+const VERSION = "rf-1795673226322";
 const FONTS = "rf-fonts";
 const CORE = [
   "./",
