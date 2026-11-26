@@ -57,7 +57,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cu
 /* Encabezado fijo: logo y racha siempre visibles */
 .appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .appbar-in{max-width:520px;margin:0 auto;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-block:12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand-logo{height:30px;width:auto;display:block}
+.brand-logo{height:26px;width:auto;display:block}
 .hdr-streak{display:flex;align-items:center;gap:6px;color:var(--muted);padding:4px 0 4px 6px}
 .hdr-streak svg{width:24px;height:24px}
 .hdr-streak b{font-family:var(--display);font-weight:600;font-size:22px;line-height:1;color:var(--muted)}
@@ -415,22 +415,27 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translate(-50%,-170%);z-index:50;background:var(--fg);color:#000;border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;transition:transform .35s;white-space:nowrap}
 .toast.show{transform:translate(-50%,0)}
 /* Intro: cada vez que se abre la app sale el logo sobre negro y luego vuela al encabezado. Un toque la salta. */
-.rfi{position:fixed;inset:0;z-index:100;background-color:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color .5s ease;animation:rfiSafe .4s 9s forwards}
+.rfi{position:fixed;inset:0;z-index:100;background-color:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color .5s ease;animation:rfiSafe .4s 10s forwards}
 .rfi-stage{display:flex;flex-direction:column;align-items:center;gap:20px;margin-top:-8vh;transition:opacity .25s ease}
-.rfi-logo{position:relative;width:min(74vw,330px);transform-origin:50% 50%;transition:transform .6s cubic-bezier(.65,0,.2,1)}
-.rfi-logo img{display:block;width:100%;height:auto}
+.rfi-logo{position:relative;width:min(74vw,330px);transform-origin:50% 50%;transition:transform .7s cubic-bezier(.65,0,.2,1)}
+.rfi-mark{position:relative}
+.rfi-mark img{display:block;width:100%;height:auto}
 .rfi-sweep{position:absolute;inset:0;pointer-events:none;opacity:0;background:linear-gradient(100deg,transparent 40%,rgba(69,212,131,.95) 50%,transparent 60%) 100% 0/260% 100% no-repeat;-webkit-mask:url(brand/logo-22fit-v2.png) center/100% 100% no-repeat;mask:url(brand/logo-22fit-v2.png) center/100% 100% no-repeat}
 .rfi-tag{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;color:var(--muted)}
+.rfi-bar{width:min(120px,32vw);height:2px;border-radius:2px;background:#262626;margin-top:-6px}
+.rfi-bar i{display:block;height:100%;border-radius:inherit;background:var(--pos);box-shadow:0 0 8px rgba(69,212,131,.6);transform-origin:0 50%}
 .rfi-credit{position:absolute;left:0;right:0;bottom:calc(36px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:3px}
 .rfi-credit span{font-size:10px;font-weight:500;letter-spacing:.32em;text-indent:.32em;text-transform:uppercase;color:var(--muted)}
 .rfi-credit b{font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.03em;color:var(--fg)}
 .rfi:not(.go) .rfi-stage,.rfi:not(.go) .rfi-credit{opacity:0}
-.rfi.go .rfi-logo img{animation:rfiSlam .75s cubic-bezier(.2,.9,.25,1) .25s both}
-.rfi.go .rfi-tag{animation:rfiTag .7s cubic-bezier(.2,.8,.2,1) .7s both}
-.rfi.go .rfi-sweep{animation:rfiSweep .8s cubic-bezier(.45,0,.3,1) .85s both}
-.rfi.go .rfi-credit{animation:rfiUp .65s cubic-bezier(.2,.8,.2,1) .85s both}
+.rfi.go .rfi-mark{animation:rfiSlam .9s cubic-bezier(.2,.9,.25,1) .45s both,rfiPush 2.4s cubic-bezier(.3,0,.2,1) 1.35s forwards}
+.rfi.go .rfi-tag{animation:rfiTag .8s cubic-bezier(.2,.8,.2,1) 1.05s both}
+.rfi.go .rfi-bar{animation:rfiUp .6s cubic-bezier(.2,.8,.2,1) 1.3s both}
+.rfi.go .rfi-bar i{animation:rfiBar 2.3s cubic-bezier(.45,0,.25,1) 1.5s both}
+.rfi.go .rfi-sweep{animation:rfiSweep 1s cubic-bezier(.45,0,.3,1) 1.3s both,rfiSweep .9s cubic-bezier(.45,0,.3,1) 2.9s forwards}
+.rfi.go .rfi-credit{animation:rfiUp .8s cubic-bezier(.2,.8,.2,1) 1.6s both}
 .rfi.out{background-color:transparent;pointer-events:none}
-.rfi.out .rfi-tag,.rfi.out .rfi-credit,.rfi.hold .rfi-credit{animation:rfiOff .22s ease both}
+.rfi.out .rfi-tag,.rfi.out .rfi-bar,.rfi.out .rfi-credit,.rfi.hold .rfi-credit{animation:rfiOff .22s ease both}
 .rfi.hold .rfi-stage{opacity:0}
 .rfi.fade{opacity:0;pointer-events:none;transition:opacity .3s ease}
 html.rfi-on .appbar .brand-logo{visibility:hidden}
@@ -439,6 +444,8 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
 @keyframes rfiSweep{0%{opacity:1;background-position:100% 0}100%{opacity:1;background-position:0 0}}
 @keyframes rfiUp{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:none}}
 @keyframes rfiOff{to{opacity:0}}
+@keyframes rfiPush{from{transform:none}to{transform:scale(1.045)}}
+@keyframes rfiBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes rfiSafe{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:370px){.emblem{width:72px;height:72px}.rank-name{font-size:24px}.streak-hero .big{font-size:54px}}
@@ -446,8 +453,9 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
 
 <div class="rfi" id="rfIntro" aria-hidden="true">
   <div class="rfi-stage">
-    <div class="rfi-logo"><img src="brand/logo-22fit-v2.png" width="1093" height="300" alt=""><span class="rfi-sweep"></span></div>
+    <div class="rfi-logo"><div class="rfi-mark"><img src="brand/logo-22fit-v2.png" width="1093" height="300" alt=""><span class="rfi-sweep"></span></div></div>
     <div class="rfi-tag">Gym Tracker</div>
+    <div class="rfi-bar"><i></i></div>
   </div>
   <div class="rfi-credit"><span>Creador</span><b>Juan Beltran</b></div>
 </div>
@@ -456,7 +464,7 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
 (function () {
   var el = document.getElementById("rfIntro");
   if (!el) return;
-  var root = document.documentElement, img = el.querySelector("img"), logo = el.querySelector(".rfi-logo");
+  var root = document.documentElement, img = el.querySelector("img"), logo = el.querySelector(".rfi-logo"), mark = el.querySelector(".rfi-mark");
   var reduce = false, skip = false, started = false, leaving = false, done = false, waiters = [], reloadFn = null, holdT, waitT;
   try { reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
   // Las recargas automáticas (versión nueva o "Buscar actualización") no repiten la intro.
@@ -480,12 +488,13 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
     if (leaving || done) return;
     leaving = true; clearTimeout(holdT); clearTimeout(waitT);
     if (reloadFn) { el.classList.add("hold"); setTimeout(reloadFn, 280); setTimeout(end, 3000); return; }
-    var to = document.querySelector(".appbar .brand-logo"), a = logo.getBoundingClientRect(), b = to && to.getBoundingClientRect();
+    // Se mide el logo ya acercado (rfiPush) para que aterrice exacto sobre el del encabezado.
+    var to = document.querySelector(".appbar .brand-logo"), a = mark.getBoundingClientRect(), b = to && to.getBoundingClientRect();
     if (!fast && !reduce && b && b.width && a.width && b.bottom > 0 && b.top < innerHeight) {
       var s = b.width / a.width, dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
       el.classList.add("out");
       logo.style.transform = "translate(" + dx + "px," + dy + "px) scale(" + s + ")";
-      setTimeout(end, 650);
+      setTimeout(end, 750);
     } else {
       el.classList.add("fade");
       setTimeout(end, reduce ? 0 : 320);
@@ -495,7 +504,7 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
     if (started || leaving) return;
     started = true; clearTimeout(waitT);
     el.classList.add("go");
-    holdT = setTimeout(finish, reduce ? 1300 : 2250);
+    holdT = setTimeout(finish, reduce ? 3000 : 3900);   // la intro completa dura unos 4,6 s
   }
   el.addEventListener("click", function () { finish(true); });
   // Espera el logo hasta 2,5 s; si no carga, abre la app sin intro.
