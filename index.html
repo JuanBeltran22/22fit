@@ -323,6 +323,22 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 
 .grecaptcha-badge{visibility:hidden!important}   /* el aviso de reCAPTCHA va como texto en Comida */
 
+/* Perfil y objetivo */
+.prof .m-title{margin-top:2px}
+.prof-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:14px}
+.prof-stats div{padding:10px 0;min-width:0}
+.prof-stats div + div{padding-left:10px;border-left:1px solid var(--line)}
+.prof-stats b{display:block;font-family:var(--display);font-size:20px;font-weight:600}
+.prof-stats span{font-size:11.5px;color:var(--muted)}
+.goal-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.goal-opts button{border:1px solid var(--line2);border-radius:10px;padding:12px;text-align:left;display:grid;gap:4px;align-content:start;min-width:0}
+.goal-opts b{font-weight:600;font-size:14px;line-height:1.25}
+.goal-opts small{font-size:12px;color:var(--muted)}
+.goal-opts button[aria-checked="true"]{border-color:var(--pos);background:color-mix(in srgb,var(--pos) 9%,transparent)}
+.goal-opts button[aria-checked="true"] small{color:var(--pos)}
+.pf-sex{grid-template-columns:1fr 1fr;margin-top:10px}
+.fgrid select{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line2);border-radius:8px;color:var(--fg);font:inherit;font-size:16px;padding:10px 12px}
+
 /* Editor de rutina */
 .plan .muted{color:var(--muted)}
 .pe-day{border-bottom:1px solid var(--line);padding:18px 0}
@@ -495,6 +511,7 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
       <button type="submit">Guardar</button>
     </form>
     <p class="note">Mide la cintura a la altura del ombligo, en ayunas, una vez por semana. Es el mejor indicador de que la barriga baja. Ganas +15 SR si registras tus medidas una vez por semana.</p>
+    <p class="note" id="goalProgress" hidden></p>
     <div class="chart" id="mChart" style="margin-top:20px"></div>
     <div class="mlist" id="mList"></div>
     <h2>Partidas</h2>
@@ -503,12 +520,9 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 
   <!-- BRIEFING -->
   <section id="v-brief" class="view" hidden>
-    <h2>Objetivo</h2>
-    <div class="block">
-      <h3>Menos barriga, más músculo</h3>
-      <p>La grasa del abdomen no se quema con abdominales. Baja cuando baja tu grasa total, y eso pasa con un déficit pequeño de calorías. Las pesas y la proteína alta hacen que tu cuerpo conserve y construya músculo mientras tanto.</p>
-      <p>Un ritmo sano es perder de 0,3 a 0,5 kg por semana. Si bajas más rápido, pierdes músculo. Si vienes de estar flaco o de no entrenar, al principio vas a ganar músculo rápido.</p>
-    </div>
+    <h2>Tu perfil y objetivo</h2>
+    <div id="profileBox"></div>
+    <div class="block" id="goalBlock" style="margin-top:20px" hidden></div>
     <h2>Nutrición diaria</h2>
     <div class="block">
       <div class="kpis" id="macros"></div>
@@ -566,7 +580,7 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
         <tr><td>Mekato dentro del cupo</td><td class="pos">+5</td></tr>
         <tr><td>Comida libre (1 por semana)</td><td>0</td></tr>
         <tr><td>1.000 pasos</td><td class="pos">+10</td></tr>
-        <tr><td>3 litros de agua</td><td class="pos">+5</td></tr>
+        <tr><td>Tu meta de agua del día</td><td class="pos">+5</td></tr>
         <tr><td>Dormir 7 horas o más</td><td class="pos">+5</td></tr>
         <tr><td>Partida perfecta (todo cumplido)</td><td class="pos">+10</td></tr>
         <tr><td>Bonus de racha (2 por día seguido, máx. 20)</td><td class="pos">+20</td></tr>
@@ -759,13 +773,40 @@ function migrate(){
 migrate();
 
 function latestKg(){ for (let i=S.measures.length-1;i>=0;i--) if (S.measures[i].kg) return S.measures[i].kg; return 80; }
-function proteinGoal(){ return Math.round(latestKg()*2/5)*5; }
-function kcalGoal(){ return Math.round(latestKg()*28/50)*50; }
+/* ---------- Perfil y objetivo de cada persona ---------- */
+const GOALS = {
+  bajar:    {name:"Bajar de peso", tag:"Perder grasa", f:0.80, p:2.0, fat:0.8,
+             desc:"Comes un poco menos de lo que gastas para perder grasa. Las pesas y la proteína alta cuidan tu músculo mientras bajas.",
+             pace:"Un ritmo sano es perder entre 0,5 y 1 % de tu peso por semana. Si bajas más rápido, pierdes músculo."},
+  recomp:   {name:"Bajar grasa y ganar músculo", tag:"Recomposición", f:0.90, p:2.2, fat:0.8,
+             desc:"Un déficit pequeño con proteína alta y pesas: bajas grasa, también la de la barriga, mientras ganas músculo. La grasa del abdomen no se quema con abdominales; baja cuando baja tu grasa total.",
+             pace:"Un ritmo sano es perder de 0,3 a 0,5 kg por semana. Mide tu cintura cada semana: es la mejor señal de progreso."},
+  mantener: {name:"Mantenerme en forma", tag:"Mantener", f:1.00, p:1.6, fat:0.9,
+             desc:"Comes lo que gastas para conservar tu peso mientras ganas fuerza y mejoras tu forma.",
+             pace:"Tu peso debería moverse menos de 1 kg al mes."},
+  subir:    {name:"Subir de peso y ganar músculo", tag:"Volumen", f:1.12, p:1.8, fat:1.0,
+             desc:"Comes un poco más de lo que gastas, con pesas y proteína, para que lo que subas sea sobre todo músculo.",
+             pace:"Un ritmo sano es subir de 0,25 a 0,5 kg por semana. Si subes más rápido, casi todo es grasa."}
+};
+const ACTIVITY = [[1.2,"Sedentario","casi sin ejercicio"],[1.375,"Ligero","1 a 3 días"],[1.55,"Moderado","3 a 5 días"],[1.725,"Alto","6 a 7 días"],[1.9,"Muy alto","trabajo físico + entreno"]];
+function profileReady(){ const p = S.profile; return !!(p && GOALS[p.goal] && (p.sex === "h" || p.sex === "m") && p.age > 0 && p.height > 0); }
+function goalOf(){ return profileReady() ? GOALS[S.profile.goal] : {name:"", tag:"", f:0.9, p:2.0, fat:0.8, desc:"", pace:""}; }
+// Gasto diario con la fórmula de Mifflin-St Jeor y el nivel de actividad.
+function tdee(){ const p = S.profile; return (10*latestKg() + 6.25*p.height - 5*p.age + (p.sex === "m" ? -161 : 5)) * (p.activity || 1.55); }
+function kcalGoal(){
+  if (!profileReady()) return Math.round(latestKg()*28/50)*50;
+  const floor = S.profile.sex === "m" ? 1200 : 1500;
+  return Math.max(floor, Math.round(tdee()*goalOf().f/50)*50);
+}
+function proteinGoal(){ return Math.min(240, Math.round(latestKg()*goalOf().p/5)*5); }
+function fatGoal(){ return Math.round(latestKg()*goalOf().fat/5)*5; }
+function waterGoal(){ return Math.min(4, Math.max(2, Math.round(latestKg()*0.035*2)/2)); }
+function fmtL(l){ return String(l).replace(".", ",") + " L"; }
 
 const ITEMS = [
   {k:"prot",  t:()=>"Proteína "+proteinGoal()+" g", s:"Huevos, pollo, carne, atún, yogur griego", pos:10, neg:-5},
   {k:"steps", t:()=>"1.000 pasos", s:"Unos 10 minutos caminando. La caminata del gym cuenta", pos:10},
-  {k:"water", t:()=>"3 litros de agua", s:"Una botella de 1 L, llénala 3 veces", pos:5},
+  {k:"water", t:()=>"Tomar " + fmtL(waterGoal()) + " de agua", s:"Lleva una botella y llénala varias veces", pos:5},
   {k:"sleep", t:()=>"Dormí 7 horas o más", s:"El músculo crece mientras duermes", pos:5}
 ];
 
@@ -807,7 +848,7 @@ function scoreDay(date, d){
   const ef = effFood(date, d);
   L.push(ef.why ? [ef.why, -20] : FOOD_LINE[ef.f].slice());
   if (d.steps) L.push(["1.000 pasos", 10]);
-  if (d.water) L.push(["3 L de agua", 5]);
+  if (d.water) L.push(["Meta de agua", 5]);
   if (d.sleep) L.push(["Sueño de 7 h", 5]);
   const okFood = ef.f === "limpio" || ef.f === "cupo";
   const perfect = !!(d.w && d.prot && okFood && d.steps && d.water && d.sleep);
@@ -1149,7 +1190,7 @@ function fixEditor(k){
       ${row("prot", "Proteína " + proteinGoal() + " g")}
       <li class="food"><div class="food-h"><b>Comida</b></div><div class="seg" role="radiogroup" aria-label="Comida de ese día">${opts.map(o=>`<button type="button" role="radio" aria-checked="${sel === o[0]}" data-fixfood="${o[0]}"${o[0] === "pase" ? ' class="bad"' : ""}>${o[1]}</button>`).join("")}</div></li>
       ${row("steps", "1.000 pasos")}
-      ${row("water", "3 litros de agua")}
+      ${row("water", "Tomar " + fmtL(waterGoal()) + " de agua")}
       ${row("sleep", "Dormí 7 horas o más")}
     </ul>
     <button type="button" class="cta" id="fixSave">Guardar corrección</button>
@@ -1646,6 +1687,12 @@ function renderHist(){
     lineChart(ws.map(m=>({y:m.waist, label:fmt(m.date)})), {id:"gws", color:"var(--accent)", minSpan:4, fmt:v=>v.toFixed(1), aria:"Cintura", empty:"Registra tu cintura otra semana para ver la tendencia."});
   $("mChart").innerHTML = mh;
   $("mList").innerHTML = S.measures.slice().reverse().slice(0,8).map(m=>`<div><span>${fmt(m.date)}</span><span class="num">${m.kg ? m.kg + " kg" : "—"} · ${m.waist ? m.waist + " cm" : "—"}</span></div>`).join("");
+  const gp = $("goalProgress"), pr = S.profile;
+  if (pr && pr.targetKg) {
+    const diff = Math.round((latestKg() - pr.targetKg)*10)/10;
+    gp.textContent = Math.abs(diff) < 0.1 ? `Llegaste a tu peso meta (${fmtN(pr.targetKg)} kg).` : `Peso meta: ${fmtN(pr.targetKg)} kg. Te faltan ${fmtN(Math.abs(diff))} kg ${diff > 0 ? "por bajar" : "por subir"}.`;
+    gp.hidden = false;
+  } else gp.hidden = true;
 
   const rows = dates.slice().reverse().slice(0,60);
   $("matches").innerHTML = rows.length ? rows.map(k=>{
@@ -1657,19 +1704,108 @@ function renderHist(){
 }
 
 /* ---------- Briefing ---------- */
+let profDraft = null;   // {goal, sex} mientras se edita el perfil
+function openProfile(){
+  const p = S.profile || {}; profDraft = {goal: p.goal || null, sex: p.sex || null};
+  selectTab("brief"); renderBrief();
+  const el = $("profileBox"); if (el) el.scrollIntoView({block:"start"});
+}
+function renderProfile(){
+  const box = $("profileBox"); if (!box) return;
+  const p = S.profile || {};
+  if (!profDraft && profileReady()) {
+    const g = GOALS[p.goal]; const act = ACTIVITY.find(a=>a[0] === p.activity) || ACTIVITY[2];
+    const diff = p.targetKg ? Math.round((latestKg() - p.targetKg)*10)/10 : null;
+    const meta = diff == null ? "" : (Math.abs(diff) < 0.1 ? " · llegaste a tu peso meta" : ` · te faltan ${fmtN(Math.abs(diff))} kg para tu meta`);
+    box.innerHTML = `<div class="prof">
+      <div class="m-type">${g.tag}</div><div class="m-title">${g.name}</div>
+      <div class="prof-stats">
+        <div><b class="num">${fmtN(latestKg())}</b><span>kg ahora</span></div>
+        <div><b class="num">${p.targetKg ? fmtN(p.targetKg) : "—"}</b><span>kg meta</span></div>
+        <div><b class="num">${p.height}</b><span>cm</span></div>
+        <div><b class="num">${p.age}</b><span>años</span></div>
+      </div>
+      <p class="note">${p.sex === "m" ? "Mujer" : "Hombre"} · actividad ${act[1].toLowerCase()}${meta}</p>
+      <button type="button" class="ghost" data-prof="edit">Editar mi perfil</button></div>`;
+    return;
+  }
+  if (!profDraft) profDraft = {goal: p.goal || null, sex: p.sex || null};
+  const d = profDraft;
+  const val = v => v != null && v !== "" ? String(v).replace(".", ",") : "";
+  box.innerHTML = `<div class="prof">
+    <div class="sub" style="margin-top:0">¿Qué quieres lograr?</div>
+    <div class="goal-opts" role="radiogroup" aria-label="Objetivo">${Object.keys(GOALS).map(k=>`<button type="button" role="radio" aria-checked="${d.goal === k}" data-pf-goal="${k}"><b>${GOALS[k].name}</b><small>${GOALS[k].tag}</small></button>`).join("")}</div>
+    <div class="sub">Tus datos</div>
+    <div class="seg pf-sex" role="radiogroup" aria-label="Sexo"><button type="button" role="radio" aria-checked="${d.sex === "h"}" data-pf-sex="h">Hombre</button><button type="button" role="radio" aria-checked="${d.sex === "m"}" data-pf-sex="m">Mujer</button></div>
+    <div class="fgrid">
+      <label for="pfAge"><span class="lt">Edad (años)</span><input id="pfAge" type="text" inputmode="numeric" value="${val(p.age)}" placeholder="Ej. 24"></label>
+      <label for="pfHeight"><span class="lt">Estatura (cm)</span><input id="pfHeight" type="text" inputmode="numeric" value="${val(p.height)}" placeholder="Ej. 175"></label>
+      <label for="pfKg"><span class="lt">Peso actual (kg)</span><input id="pfKg" type="text" inputmode="decimal" value="${S.measures.some(m=>m.kg) ? val(latestKg()) : ""}" placeholder="Ej. 80"></label>
+      <label for="pfTarget"><span class="lt">Peso meta (kg) <em>(opcional)</em></span><input id="pfTarget" type="text" inputmode="decimal" value="${val(p.targetKg)}" placeholder="Ej. 75"></label>
+      <label class="wide" for="pfAct"><span class="lt">¿Cuántos días a la semana haces ejercicio?</span><select id="pfAct">${ACTIVITY.map(a=>`<option value="${a[0]}"${(p.activity || 1.55) === a[0] ? " selected" : ""}>${a[1]} (${a[2]})</option>`).join("")}</select></label>
+    </div>
+    <button type="button" class="cta" data-prof="save">Guardar y calcular mis metas</button>
+    ${profileReady() ? `<button type="button" class="ghost" data-prof="cancel">Cancelar</button>` : ""}
+  </div>`;
+}
+function saveProfile(){
+  const d = profDraft || {};
+  const age = num($("pfAge").value), h = num($("pfHeight").value), kg = num($("pfKg").value), tg = num($("pfTarget").value);
+  const act = Number($("pfAct").value) || 1.55;
+  if (!GOALS[d.goal]) { toast("Elige tu objetivo"); return; }
+  if (d.sex !== "h" && d.sex !== "m") { toast("Elige hombre o mujer"); return; }
+  if (!(age >= 13 && age <= 90)) { toast("Escribe una edad válida"); return; }
+  if (!(h >= 120 && h <= 230)) { toast("Escribe tu estatura en centímetros, por ejemplo 175"); return; }
+  if (!(kg >= 30 && kg <= 250)) { toast("Escribe tu peso en kilos"); return; }
+  if (tg != null && !(tg >= 30 && tg <= 250)) { toast("El peso meta no es válido"); return; }
+  S.profile = {goal: d.goal, sex: d.sex, age: Math.round(age), height: Math.round(h), activity: act, targetKg: tg != null ? Math.round(tg*10)/10 : null};
+  const v = Math.round(kg*10)/10;
+  if (!S.measures.some(m=>m.kg) || Math.abs(v - latestKg()) >= 0.05) {
+    const t = today(); const ex = S.measures.find(m=>m.date === t);
+    if (ex) ex.kg = v; else S.measures.push({date: t, kg: v, waist: null});
+  }
+  profDraft = null; save(); render();
+  toast("Listo: " + kcalGoal().toLocaleString("es") + " kcal y " + proteinGoal() + " g de proteína al día");
+  const el = $("profileBox"); if (el) el.scrollIntoView({block:"start"});
+}
+function profileAction(e){
+  const pr = e.target.closest("[data-prof]");
+  if (pr) {
+    const a = pr.dataset.prof;
+    if (a === "open") openProfile();
+    else if (a === "edit") { const p = S.profile || {}; profDraft = {goal: p.goal || null, sex: p.sex || null}; renderProfile(); }
+    else if (a === "cancel") { profDraft = null; renderProfile(); }
+    else if (a === "save") saveProfile();
+    return true;
+  }
+  const g = e.target.closest("[data-pf-goal]");
+  if (g && profDraft) { profDraft.goal = g.dataset.pfGoal; document.querySelectorAll("[data-pf-goal]").forEach(b=>b.setAttribute("aria-checked", String(b === g))); return true; }
+  const s = e.target.closest("[data-pf-sex]");
+  if (s && profDraft) { profDraft.sex = s.dataset.pfSex; document.querySelectorAll("[data-pf-sex]").forEach(b=>b.setAttribute("aria-checked", String(b === s))); return true; }
+  return false;
+}
+
 function renderBrief(){
-  const kg = latestKg(); const P = proteinGoal(), K = kcalGoal(); const F = Math.round(kg*0.8/5)*5; const C = Math.max(0, Math.round((K - P*4 - F*9)/4/5)*5);
-  $("macros").innerHTML = `<div><b class="num">${K}</b><span>kcal</span></div><div><b class="num">${P}</b><span>proteína g</span></div><div><b class="num">${C}</b><span>carbos g</span></div><div><b class="num">${F}</b><span>grasa g</span></div>`;
-  $("macroNote").textContent = `Calculado con tu último peso (${kg} kg). Es un punto de partida: si en 2 semanas la cintura no baja, quita 150 kcal, sobre todo de carbos. Si te sientes sin fuerza en el gimnasio, suma 100 kcal.`;
+  renderProfile();
+  const gb = $("goalBlock"), ready = profileReady();
+  gb.hidden = !ready;
+  if (ready) { const g = goalOf(); gb.innerHTML = `<h3>Cómo lo vas a lograr</h3><p>${g.desc}</p><p>${g.pace}</p>`; }
+  const kg = latestKg(); const P = proteinGoal(), K = kcalGoal(), F = fatGoal(); const C = Math.max(0, Math.round((K - P*4 - F*9)/4/5)*5);
+  $("macros").innerHTML = `<div><b class="num">${K.toLocaleString("es")}</b><span>kcal</span></div><div><b class="num">${P}</b><span>proteína g</span></div><div><b class="num">${C}</b><span>carbos g</span></div><div><b class="num">${F}</b><span>grasa g</span></div>`;
+  $("macroNote").textContent = ready
+    ? `Calculado con tu perfil: gastas unas ${(Math.round(tdee()/50)*50).toLocaleString("es")} kcal al día y tu objetivo es ${goalOf().name.toLowerCase()}. Agua: ${fmtL(waterGoal())} al día. Es un punto de partida: revisa tu peso y tu cintura cada semana y ajusta 150 kcal si no cambian.`
+    : `Calculado solo con tu peso (${fmtN(kg)} kg). Completa tu perfil arriba para que tus metas sean exactas.`;
   const wc = weekCount(today());
   $("mekatoCount").textContent = `Esta semana llevas ${Math.min(wc.cupo, CUPOS)} de ${CUPOS} cupos de mekato y tu comida libre está ${wc.libre >= LIBRES ? "usada" : "disponible"}. Se reinician el lunes.`;
   $("tierGrid").innerHTML = TIERS.map((T,i)=>`<div>${emblem(i, T.divs.length-1, "tier-emb")}<b>${T.name}</b><span class="num">${T.min.toLocaleString("es")}+</span></div>`).join("");
 }
 
 function renderSetup(){
-  const need = !S.measures.some(m=>m.kg);
-  $("setup").innerHTML = need ? `<div class="setup"><h3>Empieza tu temporada</h3><p class="note" style="margin-top:2px">Escribe tu peso para calcular tus calorías y tu proteína del día.</p>
-    <form class="form" id="setupForm"><label for="setupKg">Peso (kg)<input id="setupKg" type="number" step="0.1" inputmode="decimal" placeholder="75.0"></label><button type="submit">Empezar</button></form></div>` : "";
+  if (profileReady()) { $("setup").innerHTML = ""; return; }
+  const nuevo = !S.measures.some(m=>m.kg);
+  $("setup").innerHTML = `<div class="setup"><h3>${nuevo ? "Empieza tu temporada" : "Completa tu perfil"}</h3>
+    <p class="note" style="margin-top:2px">Elige tu objetivo (bajar, mantenerte o subir) y pon tus datos para calcular tus calorías, tu proteína y tu agua del día.</p>
+    <button type="button" class="cta" data-prof="open" style="margin-top:14px">Configurar mi objetivo</button></div>`;
 }
 
 function render(){ applyAccent(); renderSetup(); renderRank(); renderWeek(); renderMission(); renderStreak(); renderPlan(); renderHist(); renderBrief(); renderFood(); }
@@ -1721,6 +1857,7 @@ document.addEventListener("error", e=>{
 }, true);
 
 document.addEventListener("click", e=>{
+  if (profileAction(e)) return;
   if (planAction(e)) return;
   const tp = e.target.closest("[data-top]");
   if (tp) { topAction(tp.dataset.top, tp); return; }
