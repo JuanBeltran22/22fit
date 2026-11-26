@@ -16,6 +16,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="firebase-config.js"></script>
+<script src="supabase-config.js"></script>
 </head>
 <body>
 <title>22Fit - Gym Tracker</title>
@@ -414,6 +415,40 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translate(-50%,-170%);z-index:50;background:var(--fg);color:#000;border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;transition:transform .35s;white-space:nowrap}
 .toast.show{transform:translate(-50%,0)}
+/* Cuenta: entrar con Google o con correo para guardar el progreso */
+.acct{border:1px solid var(--line2);border-radius:12px;padding:16px}
+.acct h3,.acct-nudge h3{font-family:var(--display);font-size:18px;font-weight:600;margin:0}
+.acct-nudge{margin-bottom:30px}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#131314;border:1px solid #8e918f;color:#e3e3e3;font-weight:500;font-size:15px;padding:12px;border-radius:10px;margin-top:14px}
+.gbtn svg{width:18px;height:18px;flex:0 0 auto}
+.gbtn:disabled{opacity:.5}
+.acct-me{display:flex;align-items:center;gap:12px}
+.acct-av{flex:0 0 auto;width:40px;height:40px;border-radius:50%;background:var(--pos-dim);color:var(--pos);display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:18px;overflow:hidden}
+.acct-av img{width:100%;height:100%;object-fit:cover}
+.acct-me b{display:block;font-weight:600;overflow-wrap:anywhere}
+.acct-me small{display:block;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.linkbtn{display:block;margin:14px auto 0;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px;text-align:center}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:16px}
+.auth-tabs button{border:1px solid var(--line2);border-radius:8px;padding:9px;font-weight:500;font-size:14px;text-align:center}
+.auth-tabs button[aria-selected="true"]{border-color:var(--pos);color:var(--pos)}
+.auth-form{display:grid;gap:12px;margin-top:16px}
+.auth-form label{font-size:12px;color:var(--muted);display:grid;gap:6px;position:relative}
+.auth-form input{width:100%;min-width:0;background:#000;border:1px solid var(--line2);border-radius:8px;color:var(--fg);font:inherit;font-size:16px;padding:11px 12px}
+.auth-form input:focus{border-color:var(--fg2);outline:none}
+.auth-pass input{padding-right:78px}
+.auth-pass button{position:absolute;right:4px;bottom:5px;font-size:12.5px;color:var(--fg2);padding:7px 10px}
+.auth-err{color:var(--neg);font-size:13px;margin:0}
+.auth-err:empty{display:none}
+.auth-form .cta{margin-top:2px}
+.auth-form .cta:disabled{opacity:.6}
+.pick{display:grid;gap:10px;margin-top:18px}
+.pick button{border:1px solid var(--line2);border-radius:12px;padding:14px;display:grid;gap:3px;text-align:left}
+.pick button b{font-family:var(--display);font-weight:600;font-size:16px}
+.pick button small{color:var(--muted);font-size:12.5px}
+.pick button.rec{border-color:var(--pos)}
+.pick button.rec b{color:var(--pos)}
+.auth-legal{text-align:center;margin:14px auto 0;font-size:12.5px}
+.auth-legal a,a.linkbtn{color:var(--fg2)}
 /* Intro: cada vez que se abre la app sale el logo sobre negro y luego vuela al encabezado. Un toque la salta. */
 .rfi{position:fixed;inset:0;z-index:100;background-color:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color .5s ease;animation:rfiSafe .4s 10s forwards}
 .rfi-stage{display:flex;flex-direction:column;align-items:center;gap:20px;margin-top:-8vh;transition:opacity .25s ease}
@@ -531,6 +566,7 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
 
   <!-- LOBBY -->
   <section id="v-lobby" class="view">
+    <div id="acctNudge"></div>
     <div id="setup"></div>
     <div id="rankCard"></div>
     <h2 class="h-split">Esta semana <button type="button" data-goto="racha">Ver calendario</button></h2>
@@ -629,6 +665,10 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
 
   <!-- BRIEFING -->
   <section id="v-brief" class="view" hidden>
+    <div id="acctSection" hidden>
+      <h2>Tu cuenta</h2>
+      <div id="acctBox"></div>
+    </div>
     <h2>Tu perfil y objetivo</h2>
     <div id="profileBox"></div>
     <div class="block" id="goalBlock" style="margin-top:20px" hidden></div>
@@ -743,6 +783,30 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
       <li><span class="n">4</span><span>Toca <b>Agregar</b>. 22Fit aparece en tu pantalla de inicio; ábrela desde ahí.</span></li>
     </ol>
     <button type="button" class="cta" id="iosDone">Entendido</button>
+  </div>
+</div>
+<div class="sheet" id="authSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <h3 id="authTitle">Entra con tu correo</h3>
+    <div class="auth-tabs" role="tablist" aria-label="Entrar o crear cuenta">
+      <button type="button" role="tab" data-auth-mode="in" aria-selected="true">Entrar</button>
+      <button type="button" role="tab" data-auth-mode="up" aria-selected="false">Crear cuenta</button>
+    </div>
+    <form class="auth-form" id="authForm" novalidate>
+      <label>Correo<input id="authEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required></label>
+      <label class="auth-pass">Contraseña<input id="authPass" type="password" autocomplete="current-password" minlength="6" required><button type="button" id="authShow" aria-label="Mostrar contraseña">Ver</button></label>
+      <p class="auth-err" id="authErr" role="alert"></p>
+      <button type="submit" class="cta" id="authGo">Entrar</button>
+    </form>
+    <p class="note auth-legal">Al entrar aceptas las <a href="privacidad.html#condiciones" target="_blank" rel="noopener">condiciones</a> y la <a href="privacidad.html" target="_blank" rel="noopener">privacidad</a> de 22Fit.</p>
+    <button type="button" class="linkbtn" id="authClose">Cancelar</button>
+  </div>
+</div>
+<div class="sheet" id="pickSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+    <h3 id="pickTitle">Tu cuenta ya tiene progreso</h3>
+    <p class="note">Este celular también tiene progreso guardado. Elige con cuál te quedas; el otro se reemplaza.</p>
+    <div class="pick" id="pickBox"></div>
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -1040,6 +1104,7 @@ function save(){
   S.updatedAt = Date.now();
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
   if (dbDoc) pushRemote();
+  acctSchedule();
   schedulePush();
 }
 async function pushRemote(){
@@ -1050,6 +1115,266 @@ async function pushRemote(){
   if (pending) { pending = false; pushRemote(); }
 }
 function setSync(on){ const el = $("sync"); el.classList.toggle("on", on); el.lastElementChild.textContent = on ? "Guardado en la nube" : "En este dispositivo"; }
+
+/* ---------- Cuenta (Supabase): entrar con Google o con correo y guardar el progreso en la nube ---------- */
+// Solo en la app pública con supabase-config.js. Dentro de Claude el progreso ya se guarda en la cuenta de Claude.
+const SB_VER = "2.119.0";
+const SB_AUTH_KEY = "rf.sb.auth";          // ahí guarda supabase-js la sesión
+const ACCT_LINK = KEY + ".acct";           // cuenta con la que este celular ya quedó sincronizado
+let sb = null, sbLoading = null, sbUser = null, acctTimer = null, acctBusy = false, acctAgain = false, acctLast = 0, acctTag = "", pickRemote = null, authMode = "in", acctDelArmed = false, acctDelT = null;
+let acctState = (()=>{ try { return localStorage.getItem(SB_AUTH_KEY) ? "loading" : "out"; } catch(_) { return "out"; } })();
+const G_ICON = `<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+function acctEnabled(){ return !window.claude && !!(window.RF_SUPABASE && window.RF_SUPABASE.url && window.RF_SUPABASE.key); }
+function acctLinked(){ try { return !!sbUser && localStorage.getItem(ACCT_LINK) === sbUser.id; } catch(_) { return false; } }
+function acctSetLink(id){ try { if (id) localStorage.setItem(ACCT_LINK, id); else localStorage.removeItem(ACCT_LINK); } catch(_){} }
+function sbInit(){
+  if (!acctEnabled()) return Promise.resolve(null);
+  if (sb) return Promise.resolve(sb);
+  if (sbLoading) return sbLoading;
+  sbLoading = (async ()=>{
+    try {
+      const m = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@" + SB_VER + "/+esm");
+      sb = m.createClient(window.RF_SUPABASE.url, window.RF_SUPABASE.key, {
+        auth: { flowType: "pkce", persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: SB_AUTH_KEY }
+      });
+      // Supabase pide no llamar a sus funciones dentro de este aviso; por eso se atiende un instante después.
+      sb.auth.onAuthStateChange((ev, session)=>{ setTimeout(()=>acctOnAuth(ev, session), 0); });
+      return sb;
+    } catch(e) { console.warn("Cuenta:", e && e.message || e); return null; }
+    finally { sbLoading = null; }
+  })();
+  return sbLoading;
+}
+function acctOnAuth(ev, session){
+  const u = session && session.user || null;
+  if (!u) {
+    if (sbUser || acctState !== "out") { sbUser = null; acctTag = ""; acctState = "out"; renderAcct(); schedulePush(); }
+    return;
+  }
+  const changed = !sbUser || sbUser.id !== u.id;
+  sbUser = u;
+  if (changed) { acctState = "sync"; renderAcct(); acctTagFor(u.id); acctSync(); }
+  else renderAcct();
+}
+// Marca anónima de la cuenta para el top: así una misma cuenta no sale dos veces si juega en dos celulares.
+async function acctTagFor(id){
+  try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("22fit:" + id)); acctTag = Array.from(new Uint8Array(h)).slice(0, 8).map(b=>b.toString(16).padStart(2, "0")).join(""); }
+  catch(_) { acctTag = ""; }
+  schedulePush();
+}
+function hasProgress(s){ return !!s && ((s.sr|0) > 0 || Object.keys(s.logs || {}).length > 0); }
+async function acctPull(){
+  const { data, error } = await sb.from("progress").select("data").eq("user_id", sbUser.id).maybeSingle();
+  if (error) throw error;
+  return data && data.data && data.data.v === 1 ? data.data : null;
+}
+async function acctSync(){
+  if (!sb || !sbUser) return;
+  const uid = sbUser.id;
+  try {
+    const remote = await acctPull();
+    if (!sbUser || sbUser.id !== uid) return;
+    acctState = "ok"; acctLast = Date.now();                                          // hay conexión con la cuenta
+    if (!remote) { acctSetLink(uid); await acctPush(); }                          // cuenta nueva: sube lo de este celular
+    else if (acctLinked()) {                                                          // ya sincronizado: gana lo más reciente
+      if ((remote.updatedAt || 0) > (S.updatedAt || 0)) acctAdopt(remote);
+      else if ((S.updatedAt || 0) > (remote.updatedAt || 0)) await acctPush();
+    } else if (!hasProgress(S) || (remote.updatedAt || 0) === (S.updatedAt || 0)) {  // celular nuevo o igual: trae lo de la cuenta
+      acctSetLink(uid); acctAdopt(remote, true);
+    } else { acctAskPick(remote); return; }                                          // los dos tienen progreso: elige la persona
+  } catch(e) { console.warn("Cuenta:", e && e.message || e); acctState = "err"; }
+  renderAcct();
+}
+function acctAdopt(remote, loud){
+  S = remote; migrate(); calSel = null;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(_){}
+  boot();
+  if (loud) toast("Progreso de tu cuenta cargado · " + rankOf(S.sr).label);
+}
+function acctSchedule(){ if (!acctLinked()) return; clearTimeout(acctTimer); acctTimer = setTimeout(acctPush, 1200); }
+async function acctPush(){
+  clearTimeout(acctTimer); acctTimer = null;
+  if (!sb || !acctLinked()) return;
+  if (acctBusy) { acctAgain = true; return; }
+  acctBusy = true;
+  try {
+    const { error } = await sb.from("progress").upsert({ user_id: sbUser.id, data: JSON.parse(JSON.stringify(S)), updated_at: new Date().toISOString() });
+    if (error) throw error;
+    acctState = "ok"; acctLast = Date.now();
+  } catch(e) { console.warn("Cuenta:", e && e.message || e); acctState = "err"; }
+  acctBusy = false;
+  renderAcctStatus();
+  if (acctAgain) { acctAgain = false; acctPush(); }
+}
+function acctSummary(s){
+  const days = Object.keys(s.logs || {}).length;
+  return `${rankOf(s.sr).label} · ${Math.round(s.sr)} SR · racha ${s.streak|0} · ${days} ${days === 1 ? "día registrado" : "días registrados"}`;
+}
+function acctAskPick(remote){
+  pickRemote = remote; acctState = "pick";
+  $("pickBox").innerHTML = `
+    <button type="button" class="rec" data-pick="remote"><b>Usar el de mi cuenta</b><small>${esc(acctSummary(remote))}</small></button>
+    <button type="button" data-pick="local"><b>Usar el de este celular</b><small>${esc(acctSummary(S))}. Reemplaza el de tu cuenta.</small></button>`;
+  $("pickSheet").hidden = false; refocus('[data-pick="remote"]');
+  renderAcct();
+}
+function acctPick(which){
+  const remote = pickRemote; pickRemote = null; $("pickSheet").hidden = true;
+  if (!sbUser || !remote) return;
+  acctSetLink(sbUser.id); acctState = "ok"; acctLast = Date.now();
+  if (which === "remote") acctAdopt(remote, true);
+  else { save(); acctPush(); toast("Tu cuenta quedó con el progreso de este celular"); }
+  renderAcct();
+}
+async function acctGoogle(){
+  const c = await sbInit(); if (!c) { toast("No pude conectar. Revisa tu internet."); return; }
+  try { sessionStorage.setItem("rf.noIntro", "1"); } catch(_){}   // al volver de Google no se repite la intro
+  const { error } = await c.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: "select_account" } } });
+  if (error) { try { sessionStorage.removeItem("rf.noIntro"); } catch(_){} toast("No se pudo abrir Google. Intenta de nuevo."); }
+}
+function renderAuthMode(){
+  document.querySelectorAll("[data-auth-mode]").forEach(b=>b.setAttribute("aria-selected", String(b.dataset.authMode === authMode)));
+  $("authTitle").textContent = authMode === "up" ? "Crea tu cuenta" : "Entra con tu correo";
+  $("authGo").textContent = authMode === "up" ? "Crear cuenta" : "Entrar";
+  $("authPass").setAttribute("autocomplete", authMode === "up" ? "new-password" : "current-password");
+}
+function openAuth(mode){ authMode = mode || "in"; renderAuthMode(); $("authErr").textContent = ""; $("authSheet").hidden = false; refocus("#authEmail"); }
+function closeAuth(){ $("authSheet").hidden = true; }
+function authMsg(e){
+  const m = String(e && (e.code || "") + " " + (e.message || ""));
+  if (/invalid_credentials|invalid login/i.test(m)) return "Correo o contraseña incorrectos.";
+  if (/user_already_exists|already registered/i.test(m)) return "Ese correo ya tiene cuenta. Toca Entrar.";
+  if (/weak_password|at least 6/i.test(m)) return "La contraseña debe tener al menos 6 caracteres.";
+  if (/email_address_invalid|invalid.*email|validate email/i.test(m)) return "Ese correo no es válido.";
+  if (/rate_limit|rate limit|too many/i.test(m)) return "Demasiados intentos. Espera un momento y vuelve a intentar.";
+  if (/email_not_confirmed/i.test(m)) return "Falta confirmar ese correo.";
+  if (/signup_disabled|signups not allowed/i.test(m)) return "Por ahora no se pueden crear cuentas con correo.";
+  return "No se pudo. Revisa tu internet e intenta de nuevo.";
+}
+async function authSubmit(){
+  const email = $("authEmail").value.trim(), pass = $("authPass").value, err = $("authErr");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = "Escribe un correo válido."; return; }
+  if (pass.length < 6) { err.textContent = "La contraseña debe tener al menos 6 caracteres."; return; }
+  const c = await sbInit(); if (!c) { err.textContent = "No pude conectar. Revisa tu internet."; return; }
+  const up = authMode === "up";
+  $("authGo").disabled = true; err.textContent = "";
+  try {
+    const res = up ? await c.auth.signUp({ email, password: pass }) : await c.auth.signInWithPassword({ email, password: pass });
+    if (res.error) throw res.error;
+    if (!res.data || !res.data.session) { err.textContent = "Revisa tu correo para confirmar la cuenta y luego entra."; return; }
+    $("authPass").value = ""; closeAuth();
+    toast(up ? "Cuenta creada" : "Entraste a tu cuenta");
+  } catch(e) { err.textContent = authMsg(e); }
+  finally { $("authGo").disabled = false; }
+}
+// Borra la cuenta (y por cascada su progreso en la nube) con la función delete_my_account de supabase.sql.
+async function acctDelete(){
+  try { const { error } = await sb.rpc("delete_my_account"); if (error) throw error; }
+  catch(e) { console.warn("Cuenta:", e && e.message || e); toast("No se pudo borrar. Revisa tu internet e intenta de nuevo."); return; }
+  try { await sb.auth.signOut({ scope: "local" }); } catch(_){}
+  clearTimeout(acctTimer); acctTimer = null;
+  acctSetLink(null); sbUser = null; acctTag = ""; acctState = "out";
+  renderAcct(); schedulePush();
+  toast("Tu cuenta y tu progreso en la nube se borraron. En este celular sigue todo.");
+}
+async function acctSignOut(){
+  if (acctTimer) await acctPush();
+  try { if (sb) await sb.auth.signOut(); } catch(_){}
+  acctSetLink(null); sbUser = null; acctTag = ""; acctState = "out";
+  renderAcct(); schedulePush();
+  toast("Cerraste sesión. Tu progreso sigue guardado en tu cuenta.");
+}
+function acctStatusText(){
+  if (acctState === "sync") return "Sincronizando…";
+  if (acctState === "pick") return "Falta elegir qué progreso usar";
+  if (acctState === "err") return "Sin conexión: se guarda en este celular y se sube cuando vuelva internet";
+  return "Tu progreso se guarda en tu cuenta";
+}
+function renderAcctStatus(){
+  const el = $("acctStatus"); if (!el) return;
+  el.classList.toggle("on", acctState === "ok"); el.lastElementChild.textContent = acctStatusText();
+  setSync(!!sbUser && acctState === "ok");
+}
+function acctNudgeOff(){ try { return localStorage.getItem(KEY + ".acctNudge") === "off"; } catch(_) { return false; } }
+function renderAcct(){
+  const on = acctEnabled(), box = $("acctBox"), nudge = $("acctNudge");
+  $("acctSection").hidden = !on;
+  if (!on) { nudge.innerHTML = ""; return; }
+  setSync(!!sbUser && acctState === "ok");
+  const gOn = !!window.RF_SUPABASE.google;   // el botón de Google sale solo si ese ingreso está activo en Supabase
+  const how = gOn ? "Entra con Google o con tu correo" : "Entra o crea una cuenta con tu correo";
+  const buttons = (gOn ? `<button type="button" class="gbtn" data-acct="google">${G_ICON}Continuar con Google</button>` : "") +
+    `<button type="button" class="${gOn ? "ghost" : "cta"}" data-acct="email"${gOn ? "" : ' style="margin-top:14px"'}>${gOn ? "Entrar o crear cuenta con correo" : "Entrar o crear cuenta"}</button>`;
+  if (sbUser) {
+    const md = sbUser.user_metadata || {}, name = md.full_name || md.name || "", email = sbUser.email || "";
+    const pic = /^https:\/\//.test(md.avatar_url || md.picture || "") ? (md.avatar_url || md.picture) : "";
+    box.innerHTML = `<div class="acct">
+      <div class="acct-me"><span class="acct-av">${pic ? `<img src="${esc(pic)}" alt="" referrerpolicy="no-referrer">` : esc((name || email || "?").trim().charAt(0).toUpperCase())}</span>
+        <span style="min-width:0"><b>${esc(name || email)}</b>${name && email ? `<small>${esc(email)}</small>` : ""}</span></div>
+      <div class="sync${acctState === "ok" ? " on" : ""}" id="acctStatus" style="margin-top:14px"><i></i><span>${esc(acctStatusText())}</span></div>
+      ${acctState === "pick" ? `<button type="button" class="cta" data-acct="pick">Elegir qué progreso usar</button>` : ""}
+      <button type="button" class="ghost" data-acct="out" style="margin-top:16px">Cerrar sesión</button>
+      <button type="button" class="linkbtn" data-acct="delete"${acctDelArmed ? ' style="color:var(--neg)"' : ""}>${acctDelArmed ? "Toca otra vez para borrar tu cuenta y tu progreso en la nube" : "Borrar mi cuenta"}</button>
+      <a class="linkbtn" href="privacidad.html" target="_blank" rel="noopener">Privacidad y condiciones</a>
+    </div>`;
+    nudge.innerHTML = "";
+  } else if (acctState === "loading") {
+    box.innerHTML = `<div class="acct"><div class="sync"><i></i><span>Conectando con tu cuenta…</span></div></div>`;
+    nudge.innerHTML = "";
+  } else if (acctState === "offline") {
+    box.innerHTML = `<div class="acct"><div class="sync"><i></i><span>Sin conexión con tu cuenta. Tu progreso se guarda en este celular.</span></div>
+      <button type="button" class="ghost" data-acct="retry">Reintentar</button></div>`;
+    nudge.innerHTML = "";
+  } else {
+    box.innerHTML = `<div class="acct"><h3>Guarda tu progreso</h3>
+      <p class="note">${how}. Tu progreso queda en tu cuenta y lo recuperas si cambias o pierdes el celular.</p>${buttons}</div>`;
+    nudge.innerHTML = acctNudgeOff() ? "" : `<div class="setup acct-nudge"><h3>Guarda tu progreso</h3>
+      <p class="note" style="margin-top:2px">${how} para no perderlo si cambias de celular. Si ya tienes cuenta, aquí lo recuperas.</p>
+      ${buttons}<button type="button" class="linkbtn" data-acct="later">Ahora no</button></div>`;
+  }
+}
+function acctAction(a){
+  if (a === "google") acctGoogle();
+  else if (a === "email") openAuth("in");
+  else if (a === "out") acctSignOut();
+  else if (a === "delete") {
+    clearTimeout(acctDelT);
+    if (!acctDelArmed) { acctDelArmed = true; renderAcct(); acctDelT = setTimeout(()=>{ acctDelArmed = false; renderAcct(); }, 4000); return; }
+    acctDelArmed = false; acctDelete();
+  }
+  else if (a === "pick") { acctState = "sync"; renderAcct(); acctSync(); }
+  else if (a === "retry") { acctState = "loading"; acctBoot(); }
+  else if (a === "later") { try { localStorage.setItem(KEY + ".acctNudge", "off"); } catch(_){} renderAcct(); toast("Puedes entrar cuando quieras desde Briefing"); }
+}
+async function acctBoot(){
+  if (!acctEnabled()) { renderAcct(); return; }
+  const q = new URLSearchParams(location.search), h = location.hash;
+  const back = q.has("code") || q.has("error") || /(^|[#&])(error|access_token)=/.test(h);
+  const failed = q.has("error") || /(^|[#&])error=/.test(h);
+  if (acctState !== "loading" && !back) { renderAcct(); return; }
+  acctState = "loading"; renderAcct();
+  const c = await sbInit();
+  if (!c) { acctState = "offline"; renderAcct(); return; }
+  let session = null;
+  try { session = (await c.auth.getSession()).data.session; } catch(_){}
+  if (back) {   // de vuelta de Google: limpia la dirección
+    try { history.replaceState(history.state, "", location.pathname); } catch(_){}
+    if (failed) toast("No se completó el ingreso con Google");
+  }
+  if (session) acctOnAuth("INITIAL_SESSION", session);
+  else if (!sbUser) { acctState = "out"; renderAcct(); }
+}
+$("authForm").addEventListener("submit", e=>{ e.preventDefault(); authSubmit(); });
+$("authShow").addEventListener("click", ()=>{ const i = $("authPass"), show = i.type === "password"; i.type = show ? "text" : "password"; $("authShow").textContent = show ? "Ocultar" : "Ver"; $("authShow").setAttribute("aria-label", show ? "Ocultar contraseña" : "Mostrar contraseña"); });
+$("authClose").addEventListener("click", closeAuth);
+$("authSheet").addEventListener("click", e=>{ if (e.target.id === "authSheet") closeAuth(); });
+$("pickSheet").addEventListener("click", e=>{ if (e.target.id === "pickSheet") $("pickSheet").hidden = true; });
+document.addEventListener("keydown", e=>{ if (e.key === "Escape" && !$("authSheet").hidden) closeAuth(); });
+document.addEventListener("visibilitychange", ()=>{
+  if (!acctEnabled() || !sbUser) return;
+  if (document.hidden) { if (acctTimer) acctPush(); }                                       // al salir: sube lo pendiente
+  else if (acctState !== "pick" && Date.now() - acctLast > 30000) acctSync();              // al volver: trae cambios de otro celular
+});
 
 /* ---------- Top global (Firebase; solo en la app pública con firebase-config.js) ---------- */
 const PUBLIC_URL = "https://juanbeltran22.github.io/22fit/";
@@ -1083,14 +1408,16 @@ function fbInit(){
   return fbLoading;
 }
 function cleanNick(s){ return String(s || "").normalize("NFC").replace(/[^\p{L}\p{N} ._-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 20); }
-function rankSig(){ return [S.nick, Math.round(S.sr), rankOf(S.sr).label, S.streak|0, S.best|0].join("|"); }
+function rankSig(){ return [S.nick, Math.round(S.sr), rankOf(S.sr).label, S.streak|0, S.best|0, acctTag].join("|"); }
 function schedulePush(){ if (!topEnabled() || !S.nick) return; clearTimeout(pushTimer); pushTimer = setTimeout(pushRank, 1500); }
 async function pushRank(){
   if (!topEnabled() || !S.nick || rankSig() === lastPushSig) return true;
   const f = await fbInit(); if (!f) return false;
   const sig = rankSig();
   try {
-    await f.fs.setDoc(f.fs.doc(f.db, "players", f.uid), {name: S.nick, sr: Math.round(S.sr), tier: rankOf(S.sr).label, streak: S.streak|0, best: S.best|0, updatedAt: f.fs.serverTimestamp()});
+    const row = {name: S.nick, sr: Math.round(S.sr), tier: rankOf(S.sr).label, streak: S.streak|0, best: S.best|0, updatedAt: f.fs.serverTimestamp()};
+    if (acctTag) row.acct = acctTag;   // marca de la cuenta (si entró con Google o correo)
+    await f.fs.setDoc(f.fs.doc(f.db, "players", f.uid), row);
     lastPushSig = sig; return true;
   } catch(e) { console.warn("Top global:", e && e.code || e); return false; }
 }
@@ -1103,10 +1430,12 @@ async function loadTop(){
   try {
     const snap = await fs.getDocs(fs.query(col, fs.orderBy("sr", "desc"), fs.limit(100)));
     const cutoff = Date.now() - 30*864e5;   // quien no abre la app en 30 días sale de la lista
-    const rows = snap.docs.map(d=>Object.assign({id:d.id}, d.data())).filter(r=>{
-      const t = r.updatedAt && r.updatedAt.toMillis ? r.updatedAt.toMillis() : 0;
-      return t >= cutoff || r.id === f.uid;
-    });
+    const tms = r=>r.updatedAt && r.updatedAt.toMillis ? r.updatedAt.toMillis() : 0;
+    const all = snap.docs.map(d=>Object.assign({id:d.id}, d.data())).filter(r=>tms(r) >= cutoff || r.id === f.uid);
+    // Una fila por cuenta: si alguien entra con su cuenta en dos celulares, queda la de este celular o la más reciente.
+    const best = new Map();
+    all.forEach(r=>{ if (!r.acct) return; const cur = best.get(r.acct); if (!cur || r.id === f.uid || (cur.id !== f.uid && tms(r) > tms(cur))) best.set(r.acct, r); });
+    const rows = all.filter(r=>!r.acct || best.get(r.acct) === r);
     let total = null, myPos = null;
     try { total = (await fs.getCountFromServer(col)).data().count; } catch(_){}
     const idx = rows.findIndex(r=>r.id === f.uid);
@@ -1925,7 +2254,7 @@ function renderHeader(){
   el.setAttribute("aria-label", `Racha de ${n} ${n === 1 ? "día" : "días"}. Ver calendario`);
 }
 
-function render(){ applyAccent(); renderHeader(); renderSetup(); renderRank(); renderWeek(); renderMission(); renderStreak(); renderPlan(); renderHist(); renderBrief(); renderFood(); }
+function render(){ applyAccent(); renderHeader(); renderAcct(); renderSetup(); renderRank(); renderWeek(); renderMission(); renderStreak(); renderPlan(); renderHist(); renderBrief(); renderFood(); }
 
 /* ---------- Avisos ---------- */
 let toastT;
@@ -1975,6 +2304,12 @@ document.addEventListener("error", e=>{
 }, true);
 
 document.addEventListener("click", e=>{
+  const ac = e.target.closest("[data-acct]");
+  if (ac) { acctAction(ac.dataset.acct); return; }
+  const am = e.target.closest("[data-auth-mode]");
+  if (am) { authMode = am.dataset.authMode; renderAuthMode(); $("authErr").textContent = ""; return; }
+  const pk = e.target.closest("[data-pick]");
+  if (pk) { acctPick(pk.dataset.pick); return; }
   if (profileAction(e)) return;
   if (planAction(e)) return;
   const tp = e.target.closest("[data-top]");
@@ -2201,6 +2536,7 @@ function boot(){
 }
 try { let tb = localStorage.getItem(KEY + ".tab"); if (tb === "hist") tb = "racha"; if (tb && document.querySelector(`.tab[data-v="${tb}"]`)) selectTab(tb); } catch(_){}
 boot();
+acctBoot();
 
 let lastDay = today();
 function dayCheck(){ if (today() !== lastDay) { lastDay = today(); boot(); } }

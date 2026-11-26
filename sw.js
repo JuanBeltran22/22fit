@@ -1,5 +1,5 @@
 // Service worker de 22Fit: la app abre sin internet y se actualiza sola cuando hay conexión.
-const VERSION = "rf-1795716818040";
+const VERSION = "rf-1795730237787";
 const FONTS = "rf-fonts";
 const CORE = [
   "./",
