@@ -321,6 +321,31 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 .top-actions .ghost{flex:1 0 100%}
 .top-actions .link{margin-top:6px}
 
+.grecaptcha-badge{visibility:hidden!important}   /* el aviso de reCAPTCHA va como texto en Comida */
+
+/* Editor de rutina */
+.plan .muted{color:var(--muted)}
+.pe-day{border-bottom:1px solid var(--line);padding:18px 0}
+.pe-head{display:flex;align-items:center;justify-content:space-between;gap:10px 12px;flex-wrap:wrap}
+.pe-head b{font-family:var(--display);font-size:17px;font-weight:600}
+.pe-type{grid-template-columns:1fr 1fr;margin-top:0;min-width:200px}
+.pe-f{display:grid;gap:6px;font-size:12px;color:var(--muted);margin-top:12px}
+.pe-f em{font-style:normal;color:var(--faint)}
+.pe-day input,.pe-day select{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line2);border-radius:8px;color:var(--fg);font:inherit;font-size:16px;padding:9px 11px}
+.pe-ex{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+.pe-ex li{display:grid;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px}
+.pe-r1{display:flex;gap:6px;align-items:center}
+.pe-r2{display:grid;grid-template-columns:1fr 1.4fr;gap:6px}
+.pe-ic{flex:0 0 auto;width:38px;height:38px;border-radius:8px;border:1px solid var(--line2);display:grid;place-items:center;color:var(--muted)}
+.pe-ic:disabled{opacity:.3;cursor:default}
+.pe-ic svg{width:16px;height:16px}
+.pe-actions{display:flex;justify-content:space-between;align-items:center;gap:10px 12px;flex-wrap:wrap;margin-top:12px}
+.pe-actions .link{margin-top:0}
+.pe-copy{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.pe-day .pe-copy select{width:auto;padding:6px 8px;font-size:14px}
+.pe-save{display:grid;gap:2px;margin-top:4px}
+.pe-save .link{justify-self:center}
+
 /* Barra de instalación (arriba) y guía para iPhone */
 .installbar{display:flex;align-items:center;gap:12px;margin-top:6px;padding:10px 10px 10px 12px;border:1px solid var(--pos-dim);border-radius:12px;background:color-mix(in srgb,var(--pos) 7%,transparent)}
 .ib-ic{flex:0 0 auto;color:var(--pos);display:grid;place-items:center}
@@ -424,6 +449,7 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
       <input type="file" id="scanCam" accept="image/*" capture="environment" hidden>
       <input type="file" id="scanFile" accept="image/*" hidden>
       <div class="scan-status" id="scanStatus" role="status" hidden></div>
+      <p class="note" id="scanLegal" hidden>La foto se envía a Gemini de Google solo para leer la tabla. Protegido por reCAPTCHA: aplican la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Política de Privacidad</a> y las <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Condiciones</a> de Google.</p>
     </div>
     <div class="seg ftype" role="radiogroup" aria-label="Tipo de alimento">
       <button type="button" role="radio" aria-checked="true" data-ftype="mekato">Mekato o dulce</button>
@@ -447,7 +473,8 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
   <!-- PLAN -->
   <section id="v-plan" class="view" hidden>
     <h2>Rutina semanal</h2>
-    <p class="note" style="margin-top:0">Empuje lunes y jueves, tirón martes y viernes, pierna el miércoles y fin de semana sin gimnasio. Como la prioridad es la barriga, al final de los días de pecho y de espalda hay 20 min de caminata inclinada, y hay abdomen 2 veces por semana. Cuando completes el tope de repeticiones en todas las series, súbele peso.</p>
+    <p class="note" style="margin-top:0" id="planIntro"></p>
+    <div id="planTools" style="margin-top:6px"></div>
     <div class="plan" id="planList" style="margin-top:18px"></div>
   </section>
 
@@ -697,6 +724,8 @@ const DAYFULL = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sá
 const MES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const TYPE_LBL = {fuerza:"Gimnasio", descanso:"Descanso"};
+// Rutina de cada persona: si la editó se usa la suya; si no, la rutina de ejemplo.
+function planDay(w){ const c = S && S.plan && S.plan[w]; return c && c.title && Array.isArray(c.ex) ? c : PLAN[w]; }
 
 /* ---------- Fechas ---------- */
 function ymd(dt){ return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0"); }
@@ -767,7 +796,7 @@ const MILES = [3,7,14,21,30,60,100];
 const MILE_MSG = {3:"Tres días seguidos cumpliendo. Así empieza el hábito.", 7:"Una semana completa sin fallar.", 14:"Dos semanas seguidas. Mide tu cintura y compara.", 21:"Tres semanas: el hábito ya está armado.", 30:"Un mes entero ganando.", 60:"Dos meses sin aflojar.", 100:"Cien días seguidos."};
 
 function scoreDay(date, d){
-  const p = PLAN[wday(date)]; const rest = p.type === "descanso"; const L = [];
+  const p = planDay(wday(date)); const rest = p.type === "descanso"; const L = [];
   if (rest) { if (d.w) L.push(["Descanso activo", 20]); }
   else L.push(d.w ? ["Entrenamiento completado", 40] : ["Entrenamiento fallado", -50]);
   L.push(d.prot ? ["Proteína cumplida", 10] : ["Proteína baja", -5]);
@@ -798,7 +827,7 @@ function closeDay(date, draft, noShow){
   const ra = rankOf(after);
   if (ra.t > rb.t) S.shields = 3;
   S.sr = after; S.peak = Math.max(S.peak, after);
-  S.logs[date] = {win, noShow:!!noShow, L, delta: after-before, sr: after, food, title: PLAN[wday(date)].title, d: noShow ? null : compactD(draft)};
+  S.logs[date] = {win, noShow:!!noShow, L, delta: after-before, sr: after, food, title: planDay(wday(date)).title, d: noShow ? null : compactD(draft)};
   S.lastClosed = date; delete S.drafts[date];
   return {before, after, rb, ra, win, shieldUsed, milestone, delta: after-before};
 }
@@ -825,7 +854,7 @@ function correctDay(k, nd){
   S.sr = Math.max(0, before + newDelta - (old.delta || 0));
   const applied = S.sr - before;
   Object.keys(S.logs).forEach(x=>{ if (x > k) S.logs[x].sr = Math.max(0, (S.logs[x].sr || 0) + applied); });
-  S.logs[k] = {win:r.win, noShow:false, L, delta:newDelta, sr:Math.max(0, (old.sr || 0) - (old.delta || 0) + newDelta), food:r.food, title:old.title || PLAN[wday(k)].title, d:compactD(nd), fixed:true};
+  S.logs[k] = {win:r.win, noShow:false, L, delta:newDelta, sr:Math.max(0, (old.sr || 0) - (old.delta || 0) + newDelta), food:r.food, title:old.title || planDay(wday(k)).title, d:compactD(nd), fixed:true};
   const oldStreak = S.streak;
   S.streak = runEndingAt(S.lastClosed); S.best = Math.max(longestRun(), S.streak);
   S.peak = Math.max(S.peak, S.sr);
@@ -843,7 +872,7 @@ function catchUp(){
     const daysAway = Math.round((parse(t) - parse(d)) / 864e5);
     if (hasMarks(draft)) events.push(closeDay(d, draft, false));
     else if (daysAway <= 14) events.push(closeDay(d, null, true));
-    else { S.logs[d] = {win:false, noShow:true, off:true, L:[["Fuera de temporada",0]], delta:0, sr:S.sr, food:null, title:PLAN[wday(d)].title, d:null}; S.lastClosed = d; S.streak = 0; }
+    else { S.logs[d] = {win:false, noShow:true, off:true, L:[["Fuera de temporada",0]], delta:0, sr:S.sr, food:null, title:planDay(wday(d)).title, d:null}; S.lastClosed = d; S.streak = 0; }
     d = addDays(d, 1);
   }
   Object.keys(S.drafts).forEach(k=>{ if (k < t) delete S.drafts[k]; });
@@ -869,7 +898,7 @@ function setSync(on){ const el = $("sync"); el.classList.toggle("on", on); el.la
 
 /* ---------- Top global (Firebase; solo en la app pública con firebase-config.js) ---------- */
 const PUBLIC_URL = "https://juanbeltran22.github.io/22fit/";
-const FB_VER = "10.12.2";
+const FB_VER = "12.0.0";
 let fb = null, fbLoading = null, topCache = null, topEdit = false, pushTimer = null, lastPushSig = "", leaveArmed = false, leaveT = null;
 function topEnabled(){ return !!(window.RF_FIREBASE && window.RF_FIREBASE.projectId); }
 function fbInit(){
@@ -881,10 +910,17 @@ function fbInit(){
       const base = "https://www.gstatic.com/firebasejs/" + FB_VER + "/";
       const [appM, authM, fsM] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")]);
       const app = appM.initializeApp(window.RF_FIREBASE);
+      // App Check con reCAPTCHA: le prueba a Firebase que las llamadas vienen de esta app (lo exige Gemini).
+      if (window.RF_APPCHECK_KEY) {
+        try {
+          const acM = await import(base + "firebase-app-check.js");
+          acM.initializeAppCheck(app, { provider: new acM.ReCaptchaEnterpriseProvider(window.RF_APPCHECK_KEY), isTokenAutoRefreshEnabled: true });
+        } catch(e) { console.warn("App Check:", e && e.message || e); }
+      }
       const auth = authM.getAuth(app);
       const current = await new Promise(res=>{ const un = authM.onAuthStateChanged(auth, u=>{ un(); res(u); }); });
       const user = current || (await authM.signInAnonymously(auth)).user;
-      fb = {db: fsM.getFirestore(app), uid: user.uid, fs: fsM};
+      fb = {app, db: fsM.getFirestore(app), uid: user.uid, fs: fsM};
       return fb;
     } catch(e) { console.warn("Top global:", e && e.code || e); return null; }
     finally { fbLoading = null; }
@@ -1035,20 +1071,20 @@ function draftToday(){
 }
 
 function renderMission(){
-  const t = today(); const p = PLAN[wday(t)]; const log = S.logs[t];
+  const t = today(); const p = planDay(wday(t)); const log = S.logs[t];
   $("missionHead").textContent = "Hoy · " + DAYFULL[wday(t)];
   if (log) {
-    const pn = PLAN[wday(addDays(t, 1))];
+    const pn = planDay(wday(addDays(t, 1)));
     $("mission").innerHTML = `<div class="closed"><div class="big num ${log.delta >= 0 ? "pos" : "neg"}">${sign(log.delta)}</div>
       <div><b>${log.win ? "Victoria registrada" : "Derrota registrada"}</b><div class="note" style="margin:2px 0 0">Día cerrado. Vuelve mañana.</div></div></div>
-      <div class="m-head" style="margin-top:22px"><div><div class="m-type">Mañana · ${TYPE_LBL[pn.type]}</div><div class="m-title">${pn.title}</div><div class="m-tag">${pn.tag}</div></div></div>`;
+      <div class="m-head" style="margin-top:22px"><div><div class="m-type">Mañana · ${TYPE_LBL[pn.type]}</div><div class="m-title">${esc(pn.title)}</div><div class="m-tag">${esc(pn.tag || "")}</div></div></div>`;
     return;
   }
   const d = draftToday(); const rest = p.type === "descanso";
   const preview = scoreDay(t, d); let pv = preview.L.reduce((a,x)=>a+x[1], 0);
   if (preview.win) pv += Math.min(S.streak+1, 10)*2;
 
-  const exH = p.ex.map((e,i)=>`<li><label class="row" for="ex${i}"><input class="sr" type="checkbox" id="ex${i}" data-ex="${i}"${d.ex.includes(i) ? " checked" : ""}><span class="tick" aria-hidden="true"></span><span class="t"><b>${e[0]}<em>${e[1]}</em></b><small>${e[2]}</small></span></label></li>`).join("");
+  const exH = p.ex.map((e,i)=>`<li><label class="row" for="ex${i}"><input class="sr" type="checkbox" id="ex${i}" data-ex="${i}"${d.ex.includes(i) ? " checked" : ""}><span class="tick" aria-hidden="true"></span><span class="t"><b>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}</b>${e[2] ? `<small>${esc(e[2])}</small>` : ""}</span></label></li>`).join("") || `<li class="note" style="padding:12px 0">Este día no tiene ejercicios. Agrégalos en Plan → Editar mi rutina.</li>`;
 
   const wOn = !!d.w;
   const rows = [`<li><button type="button" class="row" data-k="w" aria-pressed="${wOn}"><span class="tick" aria-hidden="true"></span><span class="t"><b>${rest ? "Descanso activo cumplido" : "Entrenamiento completado"}</b><small>Se marca solo al tachar el 80 % de la lista</small></span><span class="v num">${rest ? "+20" : (wOn ? "+40" : "−50")}</span></button></li>`];
@@ -1070,7 +1106,7 @@ function renderMission(){
     <div class="seg" role="radiogroup" aria-label="Mekato y comida de hoy">${opts.map(o=>`<button type="button" role="radio" aria-checked="${sel === o.v}" data-food="${o.v}"${o.bad ? ' class="bad"' : ""}>${o.t}<small>${o.s}</small></button>`).join("")}</div><button type="button" class="link" data-goto="food">¿Me lo puedo comer? Revísalo aquí</button></li>`);
 
   $("mission").innerHTML = `
-    <div class="m-head"><div><div class="m-type">${TYPE_LBL[p.type]}${p.rep ? " · " + p.rep : ""}</div><div class="m-title">${p.title}</div><div class="m-tag">${p.tag}</div></div>
+    <div class="m-head"><div><div class="m-type">${TYPE_LBL[p.type]}${p.rep ? " · " + esc(p.rep) : ""}</div><div class="m-title">${esc(p.title)}</div><div class="m-tag">${esc(p.tag || "")}</div></div>
       <div class="pot">SR si cierras ahora<b class="num${pv < 0 ? " neg" : " pos"}">${sign(pv)}</b></div></div>
     <div class="sub">${rest ? "Actividades" : "Ejercicios"}</div>
     <ul class="list">${exH}</ul>
@@ -1096,14 +1132,14 @@ function openDay(k, fix){
   if (fix) { const el = $("fixBox"); if (el) el.scrollIntoView({block:"start"}); }
 }
 function fixEditor(k){
-  const p = PLAN[wday(k)]; const rest = p.type === "descanso"; const d = fixDraft;
+  const p = planDay(wday(k)); const rest = p.type === "descanso"; const d = fixDraft;
   const pre = scoreDay(k, d); let pv = pre.L.reduce((a,x)=>a+x[1], 0);
   if (pre.win) pv += Math.min(runEndingAt(addDays(k,-1)) + 1, 10)*2;
   const row = (key, label, small)=>`<li><button type="button" class="row" data-fixk="${key}" aria-pressed="${!!d[key]}"><span class="tick" aria-hidden="true"></span><span class="t"><b>${label}</b>${small ? `<small>${small}</small>` : ""}</span></button></li>`;
   const sel = foodOf(d);
   const opts = [["limpio","Limpio"],["cupo","Mekato"],["libre","Comida libre"],["pase","Me pasé"]];
   return `<div class="fix">
-    <div class="m-head" style="margin-top:22px"><div><div class="m-type">Corregir día</div><div class="m-title">${p.title}</div><div class="m-tag">${fmtLong(k)}</div></div><div class="pot">SR del día<b class="num${pv < 0 ? " neg" : " pos"}">${sign(pv)}</b></div></div>
+    <div class="m-head" style="margin-top:22px"><div><div class="m-type">Corregir día</div><div class="m-title">${esc(p.title)}</div><div class="m-tag">${fmtLong(k)}</div></div><div class="pot">SR del día<b class="num${pv < 0 ? " neg" : " pos"}">${sign(pv)}</b></div></div>
     <ul class="list">
       ${row("w", rest ? "Descanso activo cumplido" : "Entrenamiento completado", rest ? "" : "Con el cardio del día")}
       ${row("prot", "Proteína " + proteinGoal() + " g")}
@@ -1157,12 +1193,12 @@ function renderStreak(){
   $("cal").innerHTML = h;
   $("calStats").innerHTML = `<span><b class="num">${wins}</b>victorias</span><span><b class="num">${losses}</b>derrotas</span><span><b class="num">${bestRun}</b>racha más larga del mes</span>`;
 
-  const k = calSel || t; const p = PLAN[wday(k)]; const lg = S.logs[k]; const st = dayState(k);
+  const k = calSel || t; const p = planDay(wday(k)); const lg = S.logs[k]; const st = dayState(k);
   let sub, right = "";
-  if (lg && st !== "off") { sub = (lg.win ? "Victoria" : (lg.noShow ? "Ausente" : "Derrota")) + " · " + (lg.title || p.title); right = `<b class="num ${lg.delta >= 0 ? "pos" : "neg"}">${sign(lg.delta)} SR</b>`; }
+  if (lg && st !== "off") { sub = (lg.win ? "Victoria" : (lg.noShow ? "Ausente" : "Derrota")) + " · " + esc(lg.title || p.title); right = `<b class="num ${lg.delta >= 0 ? "pos" : "neg"}">${sign(lg.delta)} SR</b>`; }
   else if (st === "off") sub = "Fuera de temporada";
-  else if (k === t) sub = "Hoy · " + p.title + " · sin cerrar";
-  else if (k > t) sub = "Plan · " + p.title;
+  else if (k === t) sub = "Hoy · " + esc(p.title) + " · sin cerrar";
+  else if (k > t) sub = "Plan · " + esc(p.title);
   else sub = "Antes de empezar";
   if (lg && lg.fixed && st !== "off") sub += " · corregido";
   $("calDetail").innerHTML = `<div><b>${fmtLong(k)}</b><span>${sub}</span></div>${right}`;
@@ -1194,15 +1230,116 @@ function renderYear(){
   $("year").innerHTML = h;
 }
 
-/* ---------- Plan ---------- */
+/* ---------- Plan y editor de rutina ---------- */
+const WEEK_ORDER = [1,2,3,4,5,6,0];
+let planEdit = null;   // copia de la rutina mientras se edita
+function planCopy(src){
+  const o = {};
+  [0,1,2,3,4,5,6].forEach(w=>{
+    const p = src[w] || {};
+    o[w] = {type: p.type === "descanso" ? "descanso" : "fuerza", title: p.title || "", tag: p.tag || "", rep: p.rep || "",
+            ex: (p.ex || []).map(e=>[e[0] || "", e[1] || "", e[2] || ""])};
+  });
+  return o;
+}
+function currentPlan(){ const o = {}; [0,1,2,3,4,5,6].forEach(w=>{ o[w] = planDay(w); }); return o; }
+const ICON_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg>';
+
 function renderPlan(){
-  const wdT = wday(today()); const order = [1,2,3,4,5,6,0];
-  $("planList").innerHTML = order.map(k=>{
-    const p = PLAN[k];
-    return `<details class="day${k === wdT ? " is-today" : ""}"${k === wdT ? " open" : ""}><summary><span class="dname">${DAYN[k]}</span><span class="dt"><b>${p.title}</b><span>${p.rep ? p.rep + " · " : ""}${p.tag}</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
-      <ol>${p.ex.map(e=>`<li>${e[0]}<em>${e[1]}</em><small>${e[2]}</small></li>`).join("")}</ol></details>`;
+  if (planEdit) { renderPlanEditor(); return; }
+  const wdT = wday(today());
+  $("planIntro").textContent = S.plan
+    ? "Esta es tu rutina. Toca un día para ver sus ejercicios o cámbiala cuando quieras."
+    : "Rutina de ejemplo: empuje lunes y jueves, tirón martes y viernes, pierna el miércoles y fin de semana sin gimnasio. Cámbiala por la tuya con Editar mi rutina.";
+  $("planTools").innerHTML = `<button type="button" class="ghost" data-pe="edit">Editar mi rutina</button>`;
+  $("planList").innerHTML = WEEK_ORDER.map(k=>{
+    const p = planDay(k);
+    return `<details class="day${k === wdT ? " is-today" : ""}"${k === wdT ? " open" : ""}><summary><span class="dname">${DAYN[k]}</span><span class="dt"><b>${esc(p.title)}</b><span>${p.rep ? esc(p.rep) + " · " : ""}${esc(p.tag || TYPE_LBL[p.type])}</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+      <ol>${p.ex.length ? p.ex.map(e=>`<li>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}${e[2] ? `<small>${esc(e[2])}</small>` : ""}</li>`).join("") : `<li class="muted">Sin ejercicios</li>`}</ol></details>`;
   }).join("");
 }
+
+function renderPlanEditor(){
+  $("planIntro").textContent = "Cambia el nombre de cada día, sus ejercicios y las series. Los días de descanso no llevan gimnasio.";
+  $("planTools").innerHTML = "";
+  $("planList").innerHTML = WEEK_ORDER.map(w=>{
+    const p = planEdit[w]; const rest = p.type === "descanso";
+    return `<div class="pe-day">
+      <div class="pe-head"><b>${DAYFULL[w]}</b>
+        <div class="seg pe-type" role="radiogroup" aria-label="Tipo de día del ${DAYFULL[w].toLowerCase()}">
+          <button type="button" role="radio" aria-checked="${!rest}" data-pe-type="${w}:fuerza">Gimnasio</button>
+          <button type="button" role="radio" aria-checked="${rest}" data-pe-type="${w}:descanso">Descanso</button>
+        </div></div>
+      <label class="pe-f">Nombre del día<input type="text" maxlength="40" data-pe-f="${w}:title" value="${esc(p.title)}" placeholder="${rest ? "Descanso activo" : "Ej. Pecho y tríceps"}"></label>
+      <label class="pe-f"><span>Descripción <em>(opcional)</em></span><input type="text" maxlength="60" data-pe-f="${w}:tag" value="${esc(p.tag)}" placeholder="${rest ? "Ej. Caminata y estiramientos" : "Ej. Empuje + 20 min de cardio"}"></label>
+      <ol class="pe-ex">${p.ex.map((e,i)=>`<li>
+        <div class="pe-r1"><input type="text" maxlength="60" data-pe-x="${w}:${i}:0" value="${esc(e[0])}" placeholder="Ejercicio" aria-label="Ejercicio ${i+1}"><button type="button" class="pe-ic" data-pe-up="${w}:${i}" aria-label="Subir ejercicio ${i+1}"${i === 0 ? " disabled" : ""}>${ICON_UP}</button><button type="button" class="pe-ic" data-pe-del="${w}:${i}" aria-label="Quitar ejercicio ${i+1}">${ICON_X}</button></div>
+        <div class="pe-r2"><input type="text" maxlength="20" data-pe-x="${w}:${i}:1" value="${esc(e[1])}" placeholder="Series, ej. 4×10" aria-label="Series del ejercicio ${i+1}"><input type="text" maxlength="80" data-pe-x="${w}:${i}:2" value="${esc(e[2])}" placeholder="Nota (opcional)" aria-label="Nota del ejercicio ${i+1}"></div>
+      </li>`).join("")}</ol>
+      <div class="pe-actions"><button type="button" class="link" data-pe-add="${w}">+ Agregar ${rest ? "actividad" : "ejercicio"}</button>
+        <label class="pe-copy">Copiar de<select data-pe-copy="${w}"><option value="">—</option>${WEEK_ORDER.filter(x=>x !== w).map(x=>`<option value="${x}">${DAYFULL[x]}</option>`).join("")}</select></label></div>
+    </div>`;
+  }).join("") + `<div class="pe-save"><button type="button" class="cta" data-pe="save">Guardar rutina</button><button type="button" class="ghost" data-pe="cancel">Cancelar</button><button type="button" class="link" data-pe="reset">Volver a la rutina de ejemplo</button></div>`;
+}
+
+function savePlan(){
+  const out = {};
+  [0,1,2,3,4,5,6].forEach(w=>{
+    const p = planEdit[w]; const rest = p.type === "descanso";
+    const ex = p.ex.map(e=>[String(e[0] || "").trim().slice(0,60), String(e[1] || "").trim().slice(0,20), String(e[2] || "").trim().slice(0,80)]).filter(e=>e[0]);
+    out[w] = {type: rest ? "descanso" : "fuerza", title: (String(p.title || "").trim() || (rest ? "Descanso activo" : "Día de gimnasio")).slice(0,40),
+              tag: String(p.tag || "").trim().slice(0,60), rep: String(p.rep || "").trim().slice(0,40), ex};
+  });
+  S.plan = out;
+  const d = S.drafts[today()]; if (d) d.ex = [];   // la lista de hoy pudo cambiar
+  planEdit = null; save(); render(); window.scrollTo(0, 0); toast("Rutina guardada");
+}
+
+function planAction(e){
+  const pe = e.target.closest("[data-pe]");
+  if (pe) {
+    const a = pe.dataset.pe;
+    if (a === "edit") { planEdit = planCopy(currentPlan()); renderPlan(); window.scrollTo(0, 0); }
+    else if (a === "save") savePlan();
+    else if (a === "cancel") { planEdit = null; renderPlan(); window.scrollTo(0, 0); }
+    else if (a === "reset") { planEdit = planCopy(PLAN); renderPlan(); window.scrollTo(0, 0); toast("Rutina de ejemplo cargada. Toca Guardar para usarla"); }
+    return true;
+  }
+  if (!planEdit) return false;
+  const ty = e.target.closest("[data-pe-type]");
+  if (ty) {
+    const [w, type] = ty.dataset.peType.split(":"); const p = planEdit[w];
+    p.type = type; if (type === "descanso" && !p.title.trim()) p.title = "Descanso activo";
+    renderPlan(); refocus(`[data-pe-type="${w}:${type}"]`); return true;
+  }
+  const add = e.target.closest("[data-pe-add]");
+  if (add) { const w = add.dataset.peAdd; planEdit[w].ex.push(["", "", ""]); renderPlan(); refocus(`[data-pe-x="${w}:${planEdit[w].ex.length - 1}:0"]`); return true; }
+  const del = e.target.closest("[data-pe-del]");
+  if (del) { const [w, i] = del.dataset.peDel.split(":").map(Number); planEdit[w].ex.splice(i, 1); renderPlan(); refocus(`[data-pe-add="${w}"]`); return true; }
+  const up = e.target.closest("[data-pe-up]");
+  if (up) {
+    const [w, i] = up.dataset.peUp.split(":").map(Number); const ex = planEdit[w].ex;
+    if (i > 0) { const t = ex[i-1]; ex[i-1] = ex[i]; ex[i] = t; }
+    renderPlan(); refocus(`[data-pe-up="${w}:${Math.max(0, i-1)}"]`); return true;
+  }
+  return false;
+}
+document.addEventListener("input", e=>{
+  if (!planEdit) return;
+  const f = e.target.closest("[data-pe-f]");
+  if (f) { const [w, key] = f.dataset.peF.split(":"); planEdit[w][key] = f.value; return; }
+  const x = e.target.closest("[data-pe-x]");
+  if (x) { const [w, i, j] = x.dataset.peX.split(":").map(Number); if (planEdit[w].ex[i]) planEdit[w].ex[i][j] = x.value; }
+});
+document.addEventListener("change", e=>{
+  const c = e.target.closest("[data-pe-copy]");
+  if (!c || !planEdit || c.value === "") return;
+  const w = Number(c.dataset.peCopy), src = Number(c.value);
+  const copy = planCopy(planEdit)[src];
+  planEdit[w] = Object.assign(copy, {rep: "Igual que el " + DAYFULL[src].toLowerCase()});
+  renderPlan(); toast(DAYFULL[w] + " quedó igual que el " + DAYFULL[src].toLowerCase());
+});
 
 /* ---------- ¿Me lo puedo comer? ---------- */
 const CUPO_KCAL = 200, CUPO_SAT = 5, CUPO_SUGAR = 20;
@@ -1333,7 +1470,57 @@ const SCAN_PROMPT = [
   "- Usa punto decimal en los números.",
   'Ejemplo: {"name":"Papas de limón","kcal":140,"sat":2.5,"sugar":0.5,"prot":2,"g":28,"servings":1,"per":"porcion","ok":true,"note":null}'
 ].join("\n");
-let sampleFn = null, scanCtl = null, scanTypes = [], scanMaxBytes = 20e6;
+let sampleFn = null, scanCtl = null, scanTypes = [], scanMaxBytes = 20e6, scanVia = null;
+const SCAN_INTRO = "Escanea la tabla nutricional del empaque o copia los datos de la columna por porción, y te digo si cabe en tu plan.";
+
+// En la app pública lee la etiqueta Gemini, por medio de Firebase con App Check (reCAPTCHA).
+const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
+if (!window.claude && topEnabled() && window.RF_APPCHECK_KEY) {
+  scanVia = "gemini";
+  $("scanBox").hidden = false; $("scanLegal").hidden = false;
+  $("foodIntro").textContent = SCAN_INTRO;
+}
+let aiModelP = null;
+function geminiModel(i){
+  return (async ()=>{
+    const f = await fbInit(); if (!f) throw new Error("sin conexión");
+    const aiM = await import("https://www.gstatic.com/firebasejs/" + FB_VER + "/firebase-ai.js");
+    const ai = aiM.getAI(f.app, { backend: new aiM.GoogleAIBackend() });
+    return aiM.getGenerativeModel(ai, { model: GEMINI_MODELS[i], generationConfig: { responseMimeType: "application/json", temperature: 0 } });
+  })();
+}
+function blobToB64(b){ return new Promise((res, rej)=>{ const r = new FileReader(); r.onload = ()=>res(String(r.result).split(",")[1] || ""); r.onerror = ()=>rej(r.error); r.readAsDataURL(b); }); }
+function looseJSON(t){
+  try { return JSON.parse(t); } catch(_){}
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch(_){} }
+  return null;
+}
+let geminiIdx = 0;
+async function readLabelGemini(img){
+  const data = await blobToB64(img);
+  const parts = [{ text: SCAN_PROMPT }, { inlineData: { mimeType: img.type || "image/jpeg", data } }];
+  for (; geminiIdx < GEMINI_MODELS.length; geminiIdx++) {
+    try {
+      const model = await geminiModel(geminiIdx);
+      const res = await model.generateContent(parts);
+      return looseJSON(res.response.text());
+    } catch (e) {
+      const m = String(e && e.message || "");
+      if (!/404|not found|not supported/i.test(m) || geminiIdx === GEMINI_MODELS.length - 1) throw e;   // solo prueba otro modelo si este ya no existe
+    }
+  }
+  throw new Error("sin modelo");
+}
+async function shrinkImage(file, max){
+  try {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas"); c.width = Math.round(bmp.width*k); c.height = Math.round(bmp.height*k);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise((res, rej)=>c.toBlob(b=>b ? res(b) : rej(new Error("blob")), "image/jpeg", 0.85));
+  } catch(_) { return file; }
+}
 
 (async ()=>{
   try {
@@ -1341,12 +1528,12 @@ let sampleFn = null, scanCtl = null, scanTypes = [], scanMaxBytes = 20e6;
     const s = await window.claude.use("sample"); if (!s) return;
     const lim = await s.limits().catch(()=>null);
     if (!lim || !lim.images) return;
-    sampleFn = s;
+    sampleFn = s; scanVia = "claude";
     scanTypes = Array.isArray(lim.images.mediaTypes) ? lim.images.mediaTypes : [];
     if (lim.images.maxInputBytes) scanMaxBytes = lim.images.maxInputBytes;
     if (scanTypes.length) { $("scanCam").accept = scanTypes.join(","); $("scanFile").accept = scanTypes.join(","); }
     $("scanBox").hidden = false;
-    $("foodIntro").textContent = "Escanea la tabla nutricional del empaque o copia los datos de la columna por porción, y te digo si cabe en tu plan.";
+    $("foodIntro").textContent = SCAN_INTRO;
   } catch(e){}
 })();
 
@@ -1365,14 +1552,21 @@ function scanMsg(kind, text, servings){
   if (servings) { const b = document.createElement("button"); b.type = "button"; b.className = "link"; b.dataset.whole = String(servings); b.textContent = `El empaque trae ${fmtN(servings)} porciones · me lo como entero`; st.appendChild(b); }
 }
 async function scanLabel(file){
-  if (!file || !sampleFn || scanCtl) return;
+  if (!file || !scanVia || scanCtl) return;
   scanCtl = new AbortController();
   const st = $("scanStatus"); st.hidden = false; st.className = "scan-status";
   st.innerHTML = `<span class="spin" aria-hidden="true"></span><span>Leyendo la etiqueta… puede tardar unos segundos.</span><button type="button" class="link" id="scanStop">Cancelar</button>`;
   $("scanBtn").disabled = true;
   try {
-    const img = await prepImage(file);
-    const r = await sampleFn.json(SCAN_PROMPT, {images: img, modelTier: "default", signal: scanCtl.signal});
+    let r;
+    if (scanVia === "claude") {
+      const img = await prepImage(file);
+      r = await sampleFn.json(SCAN_PROMPT, {images: img, modelTier: "default", signal: scanCtl.signal});
+    } else {
+      const img = await shrinkImage(file, 1600);
+      r = await readLabelGemini(img);
+      if (scanCtl.signal.aborted) throw {code: "cancelled"};
+    }
     const ok = r && typeof r === "object" && r.ok !== false && num(r.kcal) != null;
     if (!ok) { scanMsg("bad", (r && typeof r.note === "string" && r.note) || "No pude leer las calorías. Toma la foto más cerca, de frente y con buena luz."); return; }
     const put = (id, v)=>{ const n = num(v); $(id).value = n == null ? "" : String(Math.round(n*10)/10).replace(".", ","); };
@@ -1386,7 +1580,10 @@ async function scanLabel(file){
     scanMsg("ok", msg, sv && sv >= 1.5 ? sv : null);
   } catch (e) {
     const code = e && e.code;
+    const em = String(e && e.message || "");
     if (code === "cancelled") $("scanStatus").hidden = true;
+    else if (scanVia === "gemini" && /429|quota|exhausted/i.test(em)) scanMsg("bad", "Se alcanzó el límite de escaneos por ahora. Intenta más tarde o escribe los datos a mano.");
+    else if (scanVia === "gemini" && /app check|401|403/i.test(em)) scanMsg("bad", "El escaneo no está disponible en este momento. Escribe los datos a mano.");
     else if (["not_granted","sampling_disabled","images_unavailable","not_declared","capability_disabled","capability_removed"].indexOf(code) >= 0) {
       scanMsg("bad", "El escaneo no está disponible aquí. Escribe los datos a mano.");
       $("scanBtn").hidden = true; $("scanPick").hidden = true;
@@ -1445,7 +1642,7 @@ function renderHist(){
   $("matches").innerHTML = rows.length ? rows.map(k=>{
     const g = S.logs[k]; const r = rankOf(g.sr);
     const res = g.win ? "Victoria" : (g.noShow ? "Ausente" : "Derrota");
-    return `<details class="match ${g.win ? "win" : "loss"}"><summary><i class="res"></i><span class="md"><b>${fmt(k)} · ${res}</b>${g.title || PLAN[wday(k)].title} · ${r.label}</span><span class="dl num ${g.delta >= 0 ? "pos" : "neg"}">${sign(g.delta)}</span></summary>
+    return `<details class="match ${g.win ? "win" : "loss"}"><summary><i class="res"></i><span class="md"><b>${fmt(k)} · ${res}</b>${esc(g.title || planDay(wday(k)).title)} · ${r.label}</span><span class="dl num ${g.delta >= 0 ? "pos" : "neg"}">${sign(g.delta)}</span></summary>
       <ul>${g.L.map(x=>`<li><span>${x[0]}</span><span class="num ${x[1] > 0 ? "pos" : x[1] < 0 ? "neg" : ""}">${x[1] === 0 ? "0" : sign(x[1])}</span></li>`).join("")}</ul></details>`;
   }).join("") : `<div class="empty" style="margin-top:14px">Aún no hay partidas. Cierra tu primer día desde el Lobby.</div>`;
 }
@@ -1515,6 +1712,7 @@ document.addEventListener("error", e=>{
 }, true);
 
 document.addEventListener("click", e=>{
+  if (planAction(e)) return;
   const tp = e.target.closest("[data-top]");
   if (tp) { topAction(tp.dataset.top, tp); return; }
   if (e.target.closest("#scanStop")) { if (scanCtl) scanCtl.abort(); return; }
@@ -1596,9 +1794,9 @@ document.addEventListener("change", e=>{
   const d = draftToday(); const i = Number(ex.dataset.ex);
   d.ex = d.ex.filter(x=>x !== i); if (ex.checked) d.ex.push(i);
   // Tachar la caminata o el cardio de la lista también marca el hábito de cardio.
-  const exName = (PLAN[wday(today())].ex[i] || [""])[0];
+  const exName = (planDay(wday(today())).ex[i] || [""])[0];
   if (ex.checked && /^(Cardio|Caminata)/.test(exName)) d.steps = true;
-  const n = PLAN[wday(today())].ex.length;
+  const n = planDay(wday(today())).ex.length;
   if (d.ex.length >= Math.ceil(n*0.8)) d.w = true; else if (d.ex.length === 0) d.w = false;
   save(); renderMission(); refocus("#ex" + i);
 });
