@@ -434,14 +434,17 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 .ex-how svg{width:11px;height:11px;margin-left:2px}
 .ex-how[aria-expanded="true"]{border-color:var(--pos);color:var(--pos);background:var(--pos-dim)}
 .ex-guide{padding:4px 0 18px}
-.exg-top{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:center}
-.exg-anim{position:relative;height:220px;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.exg-anim img{position:absolute;inset:8px;width:calc(100% - 16px);height:calc(100% - 16px);object-fit:contain;filter:invert(1)}
+.exg-top{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;align-items:center}
+.exg-anim{position:relative;aspect-ratio:1;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+/* Una sola imagen por ejercicio (ejercicios/NNNN.webp) con las dos posiciones lado a lado, ya en blanco sobre negro.
+   Cada <img> es un cuadrado que muestra una mitad: f1 la inicial, f2 la final. */
+.exg-anim img{position:absolute;top:50%;left:50%;width:calc(100% - 8px);height:auto;aspect-ratio:1;transform:translate(-50%,-50%);object-fit:cover;object-position:0 0}
+.exg-anim img.f2{object-position:100% 0;opacity:0}
 /* Las dos posiciones se turnan como un GIF (0,75 s cada una con un cambio rápido). Corre siempre, también con
    "reducir movimiento": es lo que enseña el ejercicio y el dueño de la app lo pidió así. */
-.exg-anim img + img{animation:exgFlip 2s ease-in-out infinite}
+.exg-anim.ok img.f2{animation:exgFlip 2s ease-in-out infinite}
 @keyframes exgFlip{0%,37.5%{opacity:0}50%,87.5%{opacity:1}100%{opacity:0}}
-@media (prefers-reduced-motion: reduce){.exg-anim img + img{animation:exgFlip 2s ease-in-out infinite!important}}
+@media (prefers-reduced-motion: reduce){.exg-anim.ok img.f2{animation:exgFlip 2s ease-in-out infinite!important}}
 .exg-map svg{width:100%;height:auto;display:block}
 .exg-fb{display:flex;justify-content:space-around;font-size:10.5px;color:var(--muted);margin-top:2px}
 .exg-legend{display:grid;gap:4px;margin-top:8px;font-size:12px;color:var(--fg2);line-height:1.35}
@@ -1822,11 +1825,28 @@ function bodySvg(main, sec){
 }
 const ICON_PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path fill="currentColor" d="M2 1.2v9.6L10.4 6z"/></svg>';
 const guideOpen = new Set();   // guías abiertas, para que sigan abiertas cuando la pantalla se redibuja
+// La animación arranca apenas la imagen carga (y si ya estaba lista, de una).
+const guideReady = new Set(), guidePrefetched = new Set();
+document.addEventListener("load", e=>{
+  const t = e.target;
+  if (!t || t.tagName !== "IMG" || !t.closest) return;
+  const box = t.closest(".exg-anim"); if (!box) return;
+  guideReady.add(box.dataset.ex); box.classList.add("ok");
+}, true);
+// Los dibujos de los ejercicios de hoy se bajan en segundo plano, para que ▶ los muestre al instante.
+function prefetchGuides(list){
+  const run = ()=>list.forEach(e=>{
+    const g = guideFor(e[0]); if (!g || guidePrefetched.has(g.i)) return;
+    guidePrefetched.add(g.i);
+    const im = new Image(); im.onload = ()=>guideReady.add(g.i); im.src = "ejercicios/" + g.i + ".webp";
+  });
+  if (window.requestIdleCallback) requestIdleCallback(run, {timeout: 4000}); else setTimeout(run, 1500);
+}
 function guideHtml(name){
   const g = guideFor(name); if (!g) return "";
   const main = g.ml || g.m.map(x=>MUS[x]).join(", "), sec = g.s.map(x=>MUS[x]).join(", ");
   return '<div class="exg-top">' +
-      '<div class="exg-anim"><img src="ejercicios/' + g.i + '-1.svg" alt="Posición inicial" decoding="async"><img src="ejercicios/' + g.i + '-2.svg" alt="Posición final" decoding="async"></div>' +
+      '<div class="exg-anim' + (guideReady.has(g.i) ? " ok" : "") + '" data-ex="' + g.i + '"><img class="f1" src="ejercicios/' + g.i + '.webp" alt="Posición inicial"><img class="f2" src="ejercicios/' + g.i + '.webp" alt="Posición final"></div>' +
       '<div class="exg-map">' + bodySvg(g.m, g.s) + '<div class="exg-fb"><span>Frente</span><span>Espalda</span></div>' +
         '<div class="exg-legend"><span><i></i>' + esc(main) + '</span>' + (sec ? '<span><i class="k2"></i>' + esc(sec) + '</span>' : "") + '</div></div>' +
     '</div>';
@@ -1891,6 +1911,7 @@ function renderMission(){
     <ul class="list">${rows.join("")}</ul>
     <button type="button" class="cta" id="closeBtn">Cerrar día y registrar</button>
     <p class="note">Marca lo que vayas cumpliendo y cierra el día en la noche. Si no lo cierras, mañana se cierra solo con lo que marcaste, y si no marcaste nada cuenta como ausencia.</p>`;
+  prefetchGuides(p.ex);
 }
 
 /* ---------- Racha y calendario ---------- */

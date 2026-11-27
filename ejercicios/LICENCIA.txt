@@ -1,10 +1,13 @@
-Dibujos de ejercicios (archivos NNNN-1.svg y NNNN-2.svg de esta carpeta)
+Dibujos de ejercicios de esta carpeta
 
 Fuente: Everkinetic — https://github.com/everkinetic/data (proyecto de datos abiertos basado en everkinetic.com, de Greg Priday)
 Licencia: Creative Commons Atribución-CompartirIgual 4.0 Internacional (CC BY-SA 4.0)
          https://creativecommons.org/licenses/by-sa/4.0/deed.es
-Cambios: ninguno en los archivos; solo se renombraron (NNNN-relaxation.svg → NNNN-1.svg, NNNN-tension.svg → NNNN-2.svg).
-En la app se muestran con los colores invertidos (líneas blancas sobre negro) mediante CSS.
+
+- NNNN-1.svg y NNNN-2.svg: los dibujos originales sin cambios (solo renombrados: NNNN-relaxation.svg → NNNN-1.svg,
+  NNNN-tension.svg → NNNN-2.svg).
+- NNNN.webp: obra derivada de esos dos dibujos. Cambios: colores invertidos (líneas claras sobre negro), las dos
+  posiciones juntas en una sola imagen de 1200 × 600 y convertida a WebP. Se comparte con la misma licencia CC BY-SA 4.0.
 
 El mapa de músculos que acompaña a cada dibujo usa los polígonos de react-body-highlighter
 (https://github.com/giavinh79/react-body-highlighter), licencia MIT, Copyright (c) 2020 GV79.
