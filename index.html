@@ -513,6 +513,14 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 .auth-form .cta{margin-top:2px}
 .auth-form .cta:disabled{opacity:.6}
 .pick{display:grid;gap:10px;margin-top:18px}
+#rtSheet .sheet-in{max-height:92vh;overflow-y:auto}
+.rt-step{margin:0 0 6px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.rt-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:18px}
+.rt-days button{border:1px solid var(--line2);border-radius:10px;padding:12px 0;font-weight:600;font-size:13px;text-align:center}
+.rt-days button[aria-pressed="true"]{border-color:var(--pos);color:var(--pos);background:var(--pos-dim)}
+.rt-nav{display:flex;justify-content:center;gap:28px}
+.rt-nav .linkbtn{margin-top:16px}
+.cta:disabled{opacity:.45}
 .pick button{border:1px solid var(--line2);border-radius:12px;padding:14px;display:grid;gap:3px;text-align:left}
 .pick button b{font-family:var(--display);font-weight:600;font-size:16px}
 .pick button small{color:var(--muted);font-size:12.5px}
@@ -880,6 +888,14 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
     <button type="button" class="linkbtn" id="avClose">Cerrar</button>
   </div>
 </div>
+<div class="sheet" id="rtSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="rtTitle">
+    <p class="rt-step" id="rtStep"></p>
+    <h3 id="rtTitle"></h3>
+    <div id="rtBody"></div>
+    <div class="rt-nav"><button type="button" class="linkbtn" data-rt="back" id="rtBack">Atrás</button><button type="button" class="linkbtn" data-rt="close">Cerrar</button></div>
+  </div>
+</div>
 <div class="sheet" id="pickSheet" hidden>
   <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
     <h3 id="pickTitle">Tu cuenta ya tiene progreso</h3>
@@ -995,7 +1011,9 @@ const MES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const TYPE_LBL = {fuerza:"Gimnasio", descanso:"Descanso"};
 // Rutina de cada persona: si la editó se usa la suya; si no, la rutina de ejemplo.
-function planDay(w){ const c = S && S.plan && S.plan[w]; return c && c.title && Array.isArray(c.ex) ? c : PLAN[w]; }
+// Día "sin rutina": lo que ve quien entra nuevo hasta que arma la suya (no hay rutina por defecto).
+const NO_ROUTINE = {type:"descanso", title:"Sin rutina todavía", tag:"Arma tu rutina en Plan", rep:"", ex:[]};
+function planDay(w){ const c = S && S.plan && S.plan[w]; if (c && c.title && Array.isArray(c.ex)) return c; return S && !S.plan ? NO_ROUTINE : PLAN[w]; }
 
 /* ---------- Fechas ---------- */
 function ymd(dt){ return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0"); }
@@ -1162,7 +1180,9 @@ function correctDay(k, nd){
 
 function hasMarks(d){ return !!d && (d.w || d.prot || d.steps || d.water || d.sleep || d.junk || d.food); }
 function catchUp(){
-  const t = today(); let d = addDays(S.lastClosed, 1); const events = []; let guard = 0;
+  const t = today();
+  if (!S.plan) { if (S.lastClosed < addDays(t, -1)) S.lastClosed = addDays(t, -1); return []; }   // sin rutina todavía: no se cobra ningún día
+  let d = addDays(S.lastClosed, 1); const events = []; let guard = 0;
   while (d < t && guard < 400) {
     guard++;
     const draft = S.drafts[d];
@@ -1882,6 +1902,7 @@ function toggleGuide(btn){
 function renderMission(){
   const t = today(); const p = planDay(wday(t)); const log = S.logs[t];
   $("missionHead").textContent = "Hoy · " + DAYFULL[wday(t)];
+  if (needsRoutine() && !log) { $("mission").innerHTML = `<div class="empty">Cuando armes tu rutina, aquí vas a ver los ejercicios de cada día.<br><button type="button" class="link" data-rt="open">Armar mi rutina</button></div>`; return; }
   if (log) {
     const pn = planDay(wday(addDays(t, 1)));
     $("mission").innerHTML = `<div class="closed"><div class="big num ${log.delta >= 0 ? "pos" : "neg"}">${sign(log.delta)}</div>
@@ -2059,11 +2080,17 @@ const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 
 function renderPlan(){
   if (planEdit) { renderPlanEditor(); return; }
+  if (needsRoutine()) {
+    $("planIntro").textContent = "Todavía no tienes rutina. Responde 3 preguntas y te la armamos, o escríbela tú si ya sabes entrenar.";
+    $("planTools").innerHTML = `<button type="button" class="cta" data-rt="open" style="margin-top:6px">Armar mi rutina</button>`;
+    $("planList").innerHTML = "";
+    return;
+  }
   const wdT = wday(today());
   $("planIntro").textContent = S.plan
     ? "Esta es tu rutina. Toca un día para ver sus ejercicios o cámbiala cuando quieras."
     : "Rutina de ejemplo: empuje lunes y jueves, tirón martes y viernes, pierna el miércoles y fin de semana sin gimnasio. Cámbiala por la tuya con Editar mi rutina.";
-  $("planTools").innerHTML = `<button type="button" class="ghost" data-pe="edit">Editar mi rutina</button>`;
+  $("planTools").innerHTML = `<button type="button" class="ghost" data-pe="edit">Editar mi rutina</button><button type="button" class="linkbtn" data-rt="open">Armar otra con preguntas</button>`;
   $("planList").innerHTML = WEEK_ORDER.map(k=>{
     const p = planDay(k);
     return `<details class="day${k === wdT ? " is-today" : ""}"${k === wdT ? " open" : ""}><summary><span class="dname">${DAYN[k]}</span><span class="dt"><b>${esc(p.title)}</b><span>${p.rep ? esc(p.rep) + " · " : ""}${esc(p.tag || TYPE_LBL[p.type])}</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
@@ -2092,7 +2119,7 @@ function renderPlanEditor(){
       <div class="pe-actions"><button type="button" class="link" data-pe-add="${w}">+ Agregar ${rest ? "actividad" : "ejercicio"}</button>
         <label class="pe-copy">Copiar de<select data-pe-copy="${w}"><option value="">—</option>${WEEK_ORDER.filter(x=>x !== w).map(x=>`<option value="${x}">${DAYFULL[x]}</option>`).join("")}</select></label></div>
     </div>`;
-  }).join("") + `<div class="pe-save"><button type="button" class="cta" data-pe="save">Guardar rutina</button><button type="button" class="ghost" data-pe="cancel">Cancelar</button><button type="button" class="link" data-pe="reset">Volver a la rutina de ejemplo</button></div>`;
+  }).join("") + `<div class="pe-save"><button type="button" class="cta" data-pe="save">Guardar rutina</button><button type="button" class="ghost" data-pe="cancel">Cancelar</button><button type="button" class="link" data-pe="reset">Usar la rutina de ejemplo (empuje, tirón y pierna)</button></div>`;
 }
 
 function savePlan(){
@@ -2152,6 +2179,196 @@ document.addEventListener("change", e=>{
   planEdit[w] = Object.assign(copy, {rep: "Igual que el " + DAYFULL[src].toLowerCase()});
   renderPlan(); toast(DAYFULL[w] + " quedó igual que el " + DAYFULL[src].toLowerCase());
 });
+
+/* ---------- Armar la rutina (para quien entra nuevo) ---------- */
+function needsRoutine(){ return !S.plan; }
+// Quien ya venía usando la rutina de ejemplo sin cambiarla (días registrados o algo marcado) se la queda como suya.
+function migratePlan(){
+  if (S.plan) return false;
+  const used = Object.keys(S.logs || {}).length > 0 || (S.sr|0) > 0 || Object.keys(S.drafts || {}).some(k=>hasMarks(S.drafts[k]));
+  if (!used) return false;
+  S.plan = planCopy(PLAN); return true;
+}
+function rtRest(cardio){ return {type:"descanso", title:"Descanso activo", tag:"Sin gimnasio", rep:"", ex:[["Caminata o bici suave", cardio ? "40 min" : "30 min", "A tu ritmo"], ["Estiramientos", "10 min", "Pecho, cadera, femoral y espalda baja"]]}; }
+// Días base. Cada ejercicio: [nombre, series nivel medio, series para quien empieza, nota]. Los nombres tienen su GIF (▶).
+const RT_DAYS = {
+  fullA: {k:"full", title:"Cuerpo completo A", tag:"Pierna, pecho, espalda y brazos", ex:[
+    ["Sentadilla con barra","4×6–8","3×10","Baja al menos hasta el paralelo"],
+    ["Press plano con barra","4×6–8","3×10","Junta las escápulas y baja controlado"],
+    ["Jalón al pecho agarre abierto","3×10–12","3×10–12","Lleva los codos hacia las costillas"],
+    ["Press militar","3×8–10","3×10","Abdomen firme, sin arquear la espalda"],
+    ["Curl con barra","3×10–12","3×10–12","Sin balancear el cuerpo"],
+    ["Extensión de tríceps en polea","3×12","3×12","Codos pegados al cuerpo"],
+    ["Abdomen: plancha + rueda abdominal","3 rondas","3 rondas","Plancha de 30 a 45 s"]]},
+  fullB: {k:"full", title:"Cuerpo completo B", tag:"Pierna, pecho, espalda y brazos", ex:[
+    ["Peso muerto rumano","3×8–10","3×10","Cadera atrás y espalda recta"],
+    ["Press inclinado con mancuernas","3×8–10","3×10","Banco a 30°"],
+    ["Remo en T","3×8–10","3×10–12","Tira hacia el abdomen"],
+    ["Vuelos laterales","3×12–15","3×12–15","Peso ligero, hasta la altura del hombro"],
+    ["Prensa de piernas","3×10–12","3×12","No bloquees las rodillas"],
+    ["Curl martillo","3×10–12","3×10–12","Agarre neutro"],
+    ["Abdomen: elevación de piernas + crunch en polea","3×12–15","3×12","Sin impulso"]]},
+  fullC: {k:"full", title:"Cuerpo completo C", tag:"Pierna, pecho, espalda y brazos", ex:[
+    ["Prensa de piernas","4×10–12","3×12","Pies al ancho de los hombros"],
+    ["Press con mancuernas","3×8–10","3×10–12","Codos a unos 45°"],
+    ["Jalón al pecho agarre cerrado","3×10–12","3×10–12","Estira completo arriba"],
+    ["Zancadas con mancuernas","3×10 por pierna","3×8 por pierna","Paso largo, rodilla de atrás casi al piso"],
+    ["Curl femoral en máquina","3×10–12","3×12","Pausa de 1 s arriba"],
+    ["Aperturas con mancuernas","3×12","3×12","Abre en arco, codos un poco doblados"],
+    ["Pantorrilla de pie","3×12–15","3×15","Sube completo"]]},
+  upperA: {k:"upper", title:"Torso A", tag:"Pecho, espalda, hombro y brazos", ex:[
+    ["Press plano con barra","4×6–8","3×10","El pesado del día"],
+    ["Remo con barra","4×8–10","3×10","Espalda recta, tira hacia el abdomen"],
+    ["Press militar","3×8–10","3×10","Abdomen firme"],
+    ["Jalón al pecho agarre abierto","3×10–12","3×10–12","Codos hacia las costillas"],
+    ["Vuelos laterales","3×12–15","3×12–15","Peso ligero"],
+    ["Curl con barra","3×10–12","3×10–12","Sin balanceo"],
+    ["Extensión de tríceps en polea","3×12","3×12","Codos pegados al cuerpo"]]},
+  upperB: {k:"upper", title:"Torso B", tag:"Pecho, espalda, hombro y brazos", ex:[
+    ["Press inclinado con mancuernas","4×8–10","3×10","Banco a 30°"],
+    ["Jalón al pecho agarre cerrado","3×10–12","3×10–12","Agarre en V"],
+    ["Remo en T","3×10–12","3×10–12","Junta las escápulas arriba"],
+    ["Aperturas con mancuernas","3×12–15","3×12","Aprieta al cerrar"],
+    ["Vuelos laterales","3×12–15","3×12–15","Sin balancear el cuerpo"],
+    ["Curl martillo","3×10–12","3×10–12","Agarre neutro"],
+    ["Rompecráneos","3×10–12","3×10–12","Codos quietos"]]},
+  lowerA: {k:"lower", title:"Pierna A", tag:"Cuádriceps, femoral y glúteo", ex:[
+    ["Sentadilla con barra","4×6–8","3×10","Baja al menos hasta el paralelo"],
+    ["Peso muerto rumano","3×8–10","3×10","Siente el femoral"],
+    ["Prensa de piernas","3×10–12","3×12","No bloquees las rodillas"],
+    ["Curl femoral en máquina","3×10–12","3×12","Pausa de 1 s arriba"],
+    ["Pantorrilla de pie","4×12–15","3×15","Pausa abajo y sube completo"],
+    ["Abdomen: plancha + rueda abdominal","3 rondas","3 rondas","Plancha de 30 a 45 s"]]},
+  lowerB: {k:"lower", title:"Pierna B", tag:"Cuádriceps, femoral y glúteo", ex:[
+    ["Prensa de piernas","4×10–12","3×12","Pies al ancho de los hombros"],
+    ["Zancadas con mancuernas","3×10 por pierna","3×8 por pierna","Paso largo"],
+    ["Peso muerto rumano","3×8–10","3×10","Cadera atrás"],
+    ["Extensión de cuádriceps","3×12–15","3×12","Baja en 2 o 3 s"],
+    ["Curl femoral en máquina","3×12","3×12","Sin despegar la cadera"],
+    ["Abdomen: elevación de piernas + crunch en polea","3×12–15","3×12","Sin impulso"]]},
+  push: {k:"upper", title:"Pecho, hombro y tríceps", tag:"Empuje", ex:[
+    ["Press plano con barra","4×6–8","3×10","El pesado del día"],
+    ["Press inclinado con mancuernas","3×8–10","3×10","Banco a 30°"],
+    ["Peck deck","3×12–15","3×12","Aprieta 1 s al cerrar"],
+    ["Press militar","3×8–10","3×10","Abdomen firme"],
+    ["Vuelos laterales","4×12–15","3×12–15","Peso ligero"],
+    ["Rompecráneos","3×8–10","3×10","Codos quietos"],
+    ["Extensión de tríceps en polea","3×12","3×12","Codos pegados al cuerpo"]]},
+  pull: {k:"upper", title:"Espalda y bíceps", tag:"Tirón", ex:[
+    ["Jalón al pecho agarre abierto","4×8–10","3×10–12","Saca el pecho"],
+    ["Remo con barra","3×8–10","3×10","Espalda recta"],
+    ["Jalón al pecho agarre cerrado","3×10–12","3×10–12","Agarre en V"],
+    ["Remo en T","3×10–12","3×10–12","Tira hacia el abdomen"],
+    ["Hiperextensiones (espalda baja)","3×12–15","3×12","Sube hasta quedar recto"],
+    ["Curl araña","3×10–12","3×10–12","Pecho apoyado en el banco"],
+    ["Curl martillo","3×10–12","3×10–12","Agarre neutro"]]},
+  legs: {k:"lower", title:"Pierna", tag:"Cuádriceps, femoral, glúteo y pantorrilla", ex:[
+    ["Sentadilla con barra","4×6–8","3×10","Descansa 2 o 3 min"],
+    ["Prensa de piernas","3×10–12","3×12","No bloquees las rodillas"],
+    ["Peso muerto rumano","3×8–10","3×10","Espalda recta"],
+    ["Zancadas con mancuernas","3×10 por pierna","3×8 por pierna","Paso largo"],
+    ["Curl femoral en máquina","3×10–12","3×12","Pausa de 1 s arriba"],
+    ["Extensión de cuádriceps","3×12–15","3×12","Baja en 2 o 3 s"],
+    ["Pantorrilla de pie","4×12–15","3×15","Sube completo"],
+    ["Abdomen: plancha + rueda abdominal","3 rondas","3 rondas","Plancha de 30 a 45 s"]]}
+};
+// Qué día de la semana toca cada sesión según los días que puede ir (1 = lunes).
+const RT_WEEK = {
+  2: {1:"fullA", 4:"fullB"},
+  3: {1:"fullA", 3:"fullB", 5:"fullC"},
+  4: {1:"upperA", 2:"lowerA", 4:"upperB", 5:"lowerB"},
+  5: {1:"push", 2:"pull", 3:"legs", 4:"upperA", 5:"lowerB"},
+  6: {1:"push", 2:"pull", 3:"legs", 4:"push", 5:"pull", 6:"legs"}
+};
+const RT_ARM = /^(curl (con barra|martillo|arana)|extension de triceps|rompecraneos)/;
+function buildRoutine(o){
+  const beg = o.lvl === "nuevo", cardio = o.focus === "grasa";
+  const week = RT_WEEK[o.days] || RT_WEEK[3], first = {}, plan = {};
+  [1,2,3,4,5,6,0].forEach(w=>{
+    const key = week[w];
+    if (!key) { plan[w] = rtRest(cardio); return; }
+    const D = RT_DAYS[key], legs = D.k !== "upper", upper = D.k !== "lower";
+    const ex = D.ex.map(e=>[e[0], beg ? e[2] : e[1], e[3]]);
+    const has = re => ex.some(e=>re.test(normEx(e[0])));
+    if (o.focus === "pierna") {
+      if (legs) ex.splice(1, 0, ["Hip thrust", beg ? "3×10" : "4×8–10", "Aprieta los glúteos 1 s arriba"]);
+      for (let i = ex.length - 1; i >= 0; i--) if (RT_ARM.test(normEx(ex[i][0]))) { ex.splice(i, 1); break; }   // una de brazo menos para no alargar
+    }
+    if (o.focus === "torso" && upper) {
+      if (!has(/apertura|peck/)) ex.push(["Aperturas con mancuernas", "3×12", "Abre en arco, codos un poco doblados"]);
+      else if (!has(/martillo/)) ex.push(["Curl martillo", "3×10–12", "Agarre neutro"]);
+      if (legs) { const i = ex.findIndex(e=>/pantorrilla|zancada/.test(normEx(e[0]))); if (i >= 0) ex.splice(i, 1); }
+    }
+    if (cardio) ex.push(["Cardio: caminata inclinada", "20 min", "Inclinación 10–12 %, 5–6 km/h"]);
+    if (beg) ex[0] = [ex[0][0], ex[0][1], "Primeras semanas: poco peso y buena técnica. Toca ▶ para ver cómo se hace"];
+    const rep = first[key] != null ? "Repite el " + DAYFULL[first[key]].toLowerCase() : "";
+    if (first[key] == null) first[key] = w;
+    plan[w] = {type:"fuerza", title:D.title, tag:D.tag + (cardio ? " + 20 min de cardio" : ""), rep, ex};
+  });
+  return plan;
+}
+let rt = null;   // respuestas mientras se arma la rutina
+const RT_Q = {
+  lvl: {t:"¿Ya sabes entrenar en el gimnasio?", o:[["nuevo","No, soy nuevo","Te armamos todo, con ejercicios fáciles de aprender"],["algo","Sé lo básico","Te armamos una rutina más completa"],["propia","Sí, ya tengo mi rutina","La escribes tú, ejercicio por ejercicio"]]},
+  days: {t:"¿Cuántos días a la semana puedes ir?", o:[["2","2 días","Cuerpo completo"],["3","3 días","Cuerpo completo · lo mejor para empezar"],["4","4 días","Torso y pierna"],["5","5 días","Empuje, tirón, pierna, torso y pierna"],["6","6 días","Empuje, tirón y pierna, dos veces"]]},
+  focus: {t:"¿En qué te quieres enfocar?", o:[["equilibrado","Todo el cuerpo por igual","Equilibrado"],["pierna","Pierna y glúteo","Más trabajo de pierna y glúteo"],["torso","Pecho, espalda y brazos","Más trabajo de tren superior"],["grasa","Bajar grasa","Todo el cuerpo + 20 min de cardio cada día"]]}
+};
+function openRoutine(){ rt = {step:"lvl", own:[]}; renderRoutine(); $("rtSheet").hidden = false; refocus("#rtBody button"); }
+function closeRoutine(){ $("rtSheet").hidden = true; rt = null; }
+function renderRoutine(){
+  const order = rt.lvl === "propia" ? ["lvl","own"] : ["lvl","days","focus"];
+  $("rtStep").textContent = "Pregunta " + (order.indexOf(rt.step) + 1) + " de " + (rt.step === "lvl" ? 3 : order.length);
+  $("rtBack").hidden = rt.step === "lvl";
+  if (rt.step === "own") {
+    $("rtTitle").textContent = "¿Qué días vas al gimnasio?";
+    $("rtBody").innerHTML = '<div class="rt-days">' + WEEK_ORDER.map(w=>'<button type="button" aria-pressed="' + rt.own.includes(w) + '" data-rt-day="' + w + '">' + DAYN[w] + '</button>').join("") + '</div>' +
+      '<button type="button" class="cta" data-rt="write"' + (rt.own.length ? "" : " disabled") + '>Escribir mi rutina</button>';
+    return;
+  }
+  const q = RT_Q[rt.step];
+  $("rtTitle").textContent = q.t;
+  $("rtBody").innerHTML = '<div class="pick">' + q.o.map(o=>'<button type="button" data-rt-pick="' + o[0] + '"><b>' + o[1] + '</b><small>' + o[2] + '</small></button>').join("") + '</div>' +
+    (rt.step === "focus" && S.plan ? '<p class="note">Tu rutina actual se reemplaza por la nueva.</p>' : "");
+}
+function finishRoutine(){
+  S.plan = buildRoutine(rt);
+  const d = S.drafts[today()]; if (d) d.ex = [];   // la lista de hoy cambió
+  closeRoutine(); planEdit = null; save(); render(); selectTab("plan");
+  toast("Tu rutina está lista · cámbiala cuando quieras");
+}
+function writeOwnRoutine(){
+  const days = WEEK_ORDER.filter(w=>rt.own.includes(w)), plan = {};
+  [0,1,2,3,4,5,6].forEach(w=>{ plan[w] = rtRest(false); });
+  days.forEach((w, i)=>{ plan[w] = {type:"fuerza", title:"Día " + (i + 1), tag:"", rep:"", ex:[["","",""]]}; });
+  closeRoutine(); planEdit = planCopy(plan); selectTab("plan"); renderPlan(); window.scrollTo(0, 0);
+  toast("Escribe los ejercicios de cada día y toca Guardar rutina");
+}
+function routineAction(e){
+  const a = e.target.closest("[data-rt]");
+  if (a) {
+    const k = a.dataset.rt;
+    if (k === "open") openRoutine();
+    else if (!rt) return true;
+    else if (k === "close") closeRoutine();
+    else if (k === "back") { rt.step = rt.step === "focus" ? "days" : "lvl"; renderRoutine(); }
+    else if (k === "write") { if (rt.own.length) writeOwnRoutine(); }
+    return true;
+  }
+  if (!rt) return false;
+  const p = e.target.closest("[data-rt-pick]");
+  if (p) {
+    const v = p.dataset.rtPick;
+    if (rt.step === "lvl") { rt.lvl = v; rt.step = v === "propia" ? "own" : "days"; }
+    else if (rt.step === "days") { rt.days = Number(v); rt.step = "focus"; }
+    else if (rt.step === "focus") { rt.focus = v; finishRoutine(); return true; }
+    renderRoutine(); refocus("#rtBody button"); return true;
+  }
+  const d = e.target.closest("[data-rt-day]");
+  if (d) { const w = Number(d.dataset.rtDay), i = rt.own.indexOf(w); if (i >= 0) rt.own.splice(i, 1); else rt.own.push(w); renderRoutine(); refocus('[data-rt-day="' + w + '"]'); return true; }
+  return false;
+}
+$("rtSheet").addEventListener("click", e=>{ if (e.target.id === "rtSheet") closeRoutine(); });
+document.addEventListener("keydown", e=>{ if (e.key === "Escape" && !$("rtSheet").hidden) closeRoutine(); });
 
 /* ---------- ¿Me lo puedo comer? ---------- */
 const CUPO_KCAL = 200, CUPO_SAT = 5, CUPO_SUGAR = 20;
@@ -2568,9 +2785,12 @@ function renderBrief(){
 }
 
 function renderSetup(){
-  if (profileReady()) { $("setup").innerHTML = ""; return; }
+  const rutina = needsRoutine() ? `<div class="setup"><h3>Arma tu rutina</h3>
+    <p class="note" style="margin-top:2px">Responde 3 preguntas y te armamos una rutina a tu medida. Si ya sabes entrenar, escribes la tuya.</p>
+    <button type="button" class="cta" data-rt="open" style="margin-top:14px">Armar mi rutina</button></div>` : "";
+  if (profileReady()) { $("setup").innerHTML = rutina; return; }
   const nuevo = !S.measures.some(m=>m.kg);
-  $("setup").innerHTML = `<div class="setup"><h3>${nuevo ? "Empieza tu temporada" : "Completa tu perfil"}</h3>
+  $("setup").innerHTML = rutina + `<div class="setup"><h3>${nuevo ? "Empieza tu temporada" : "Completa tu perfil"}</h3>
     <p class="note" style="margin-top:2px">Elige tu objetivo (bajar, mantenerte o subir) y pon tus datos para calcular tus calorías, tu proteína y tu agua del día.</p>
     <button type="button" class="cta" data-prof="open" style="margin-top:14px">Configurar mi objetivo</button></div>`;
 }
@@ -2640,6 +2860,7 @@ document.addEventListener("click", e=>{
   if (am) { authMode = am.dataset.authMode; renderAuthMode(); $("authErr").textContent = ""; return; }
   const pk = e.target.closest("[data-pick]");
   if (pk) { acctPick(pk.dataset.pick); return; }
+  if (routineAction(e)) return;
   if (meAction(e)) return;
   if (profileAction(e)) return;
   if (planAction(e)) return;
@@ -2914,6 +3135,7 @@ try {
 
 /* ---------- Arranque ---------- */
 function boot(){
+  if (migratePlan()) save();
   const evs = catchUp(); if (evs.length) save(); else schedulePush();
   render();
   evs.forEach(announce);
