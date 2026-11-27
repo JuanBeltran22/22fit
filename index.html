@@ -393,9 +393,6 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 .ins-head{display:flex;align-items:center;gap:14px}
 .ins-head img{width:60px;height:60px;border-radius:14px;flex:0 0 auto;border:1px solid var(--line2);background:#000}
 .ins-head h3{margin:0}
-.ins-perks{list-style:none;margin:18px 0 4px;padding:0;display:grid;gap:9px}
-.ins-perks li{position:relative;padding-left:28px;color:var(--fg2);font-size:14.5px}
-.ins-perks li::before{content:"";position:absolute;left:3px;top:5px;width:13px;height:7px;border-left:2.5px solid var(--pos);border-bottom:2.5px solid var(--pos);transform:rotate(-45deg)}
 .cta.ins-go{background:var(--pos);color:#000}
 @keyframes ibPulse{0%{box-shadow:0 0 0 0 rgba(69,212,131,.55)}70%{box-shadow:0 0 0 10px rgba(69,212,131,0)}100%{box-shadow:0 0 0 0 rgba(69,212,131,0)}}
 .ib-btn,.cta.ins-go{animation:ibPulse 2s ease-out infinite}
@@ -822,12 +819,7 @@ html.rfi-on .appbar .brand-logo{visibility:hidden}
 <div class="modal" id="modal" hidden><div class="modal-in" id="modalIn"></div></div>
 <div class="sheet" id="installSheet" hidden>
   <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="insTitle">
-    <div class="ins-head"><img id="insIcon" alt="" width="60" height="60"><div><h3 id="insTitle">Instala 22Fit</h3><p class="note" style="margin-top:2px">Gratis · tarda 10 segundos</p></div></div>
-    <ul class="ins-perks">
-      <li>Se abre desde tu pantalla de inicio, en pantalla completa</li>
-      <li>Funciona sin internet</li>
-      <li>Tu racha y tu progreso siempre a un toque</li>
-    </ul>
+    <div class="ins-head"><img id="insIcon" alt="" width="60" height="60"><h3 id="insTitle">Instala 22Fit</h3></div>
     <div id="insBody"></div>
     <button type="button" class="linkbtn" id="insLater">Ahora no</button>
   </div>
