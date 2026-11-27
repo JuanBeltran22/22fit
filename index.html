@@ -434,7 +434,7 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 .ex-how svg{width:11px;height:11px;margin-left:2px}
 .ex-how[aria-expanded="true"]{border-color:var(--pos);color:var(--pos);background:var(--pos-dim)}
 .ex-guide{padding:4px 0 18px}
-/* Dos cuadros iguales: el movimiento a la izquierda y el cuerpo a la derecha; los músculos en una línea centrada debajo. */
+/* Dos cuadros iguales: el movimiento a la izquierda y el cuerpo con los músculos resaltados a la derecha. */
 .exg-top{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .exg-anim{position:relative;aspect-ratio:1;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 /* Una sola imagen por ejercicio (ejercicios/NNNN.webp) con las dos posiciones lado a lado, ya en blanco sobre negro.
@@ -448,10 +448,6 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 @media (prefers-reduced-motion: reduce){.exg-anim.ok img.f2{animation:exgFlip 2s ease-in-out infinite!important}}
 .exg-map{position:relative;aspect-ratio:1;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;place-items:center;padding:12px 8px}
 .exg-map svg{height:100%;width:auto;max-width:100%;display:block}
-.exg-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12.5px;color:var(--fg2);line-height:1.35;text-align:center}
-.exg-legend span{display:inline-flex;gap:6px;align-items:center}
-.exg-legend i{flex:0 0 auto;width:9px;height:9px;border-radius:2px;background:var(--pos)}
-.exg-legend i.k2{background:rgba(69,212,131,.38)}
 .exg-credits{margin-top:22px;font-size:12px}
 .exg-credits a{color:inherit}
 /* Perfil: avatar, nombre, guías plegables */
@@ -1848,9 +1844,8 @@ function guideHtml(name){
   const main = g.ml || g.m.map(x=>MUS[x]).join(", "), sec = g.s.map(x=>MUS[x]).join(", ");
   return '<div class="exg-top">' +
       '<div class="exg-anim' + (guideReady.has(g.i) ? " ok" : "") + '" data-ex="' + g.i + '"><img class="f1" src="ejercicios/' + g.i + '.webp" alt="Posición inicial"><img class="f2" src="ejercicios/' + g.i + '.webp" alt="Posición final"></div>' +
-      '<div class="exg-map">' + bodySvg(g.m, g.s) + '</div>' +
-    '</div>' +
-    '<div class="exg-legend"><span><i></i>' + esc(main) + '</span>' + (sec ? '<span><i class="k2"></i>' + esc(sec) + '</span>' : "") + '</div>';
+      '<div class="exg-map" role="img" aria-label="' + esc("Trabaja: " + main + (sec ? ". Ayudan: " + sec : "")) + '">' + bodySvg(g.m, g.s) + '</div>' +
+    '</div>';
 }
 function howBtn(key, name){
   return '<button type="button" class="ex-how" data-how="' + key + '" data-name="' + esc(name) + '" aria-expanded="' + guideOpen.has(key) + '" aria-label="Cómo se hace: ' + esc(name) + '">' + ICON_PLAY + '</button>';
