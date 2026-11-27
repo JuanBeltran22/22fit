@@ -212,7 +212,9 @@ h2{font-family:var(--body);font-size:11.5px;font-weight:500;letter-spacing:.14em
 .day .dt span{font-size:12.5px;color:var(--muted)}
 .chev{width:16px;height:16px;color:var(--muted);transition:transform .2s;flex:0 0 auto}
 .day[open] .chev{transform:rotate(180deg)}
-.day ol{margin:0;padding:14px 0 20px 48px;display:grid;gap:12px;font-size:14px}
+.day ol{margin:0;padding:6px 0 10px 48px;display:grid;gap:0;font-size:14px}
+.day ol > li{padding:13px 0}
+.day ol > li + li{border-top:1px solid var(--line)}
 .day ol li em{font-style:normal;font-family:var(--display);font-size:13px;color:var(--accent);margin-left:6px}
 .day ol li small{display:block;font-size:12.5px;color:var(--muted)}
 
@@ -425,12 +427,11 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translate(-50%,-170%);z-index:50;background:var(--fg);color:#000;border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;transition:transform .35s;white-space:nowrap}
 .toast.show{transform:translate(-50%,0)}
 /* Guía de cada ejercicio: dibujo que se mueve, músculos que trabaja y pasos */
-.ex-line{display:flex;align-items:flex-start;gap:10px}
+.ex-line{display:flex;align-items:center;gap:10px}
 .ex-line > .row{flex:1;min-width:0}
-.ex-line2{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.ex-line2{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .ex-line2 > span{min-width:0}
-.ex-how{flex:0 0 auto;width:30px;height:30px;margin-top:9px;border-radius:50%;border:1px solid var(--line2);color:var(--fg2);display:grid;place-items:center}
-.ex-line2 .ex-how{margin-top:-4px}
+.ex-how{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:1px solid var(--line2);color:var(--fg2);display:grid;place-items:center}
 .ex-how svg{width:11px;height:11px;margin-left:2px}
 .ex-how[aria-expanded="true"]{border-color:var(--pos);color:var(--pos);background:var(--pos-dim)}
 .ex-guide{padding:4px 0 18px}
@@ -1854,6 +1855,21 @@ function howPanel(key, name){
   const open = guideOpen.has(key);
   return '<div class="ex-guide"' + (open ? "" : " hidden") + '>' + (open ? guideHtml(name) : "") + '</div>';
 }
+// Todas las filas de ejercicios de una lista miden lo mismo (el alto de la más larga): así los ▶ quedan a la misma distancia.
+function equalizeExRows(){
+  document.querySelectorAll(".day[open] ol, #mission ul.list").forEach(list=>{
+    const rows = Array.from(list.children).map(li=>li.querySelector(":scope > .ex-line, :scope > .ex-line2")).filter(Boolean);
+    if (rows.length < 2) return;
+    rows.forEach(r=>{ r.style.minHeight = ""; });
+    const h = Math.max(...rows.map(r=>r.getBoundingClientRect().height));
+    if (h > 0) rows.forEach(r=>{ r.style.minHeight = Math.ceil(h) + "px"; });
+  });
+}
+let eqT = null;
+function equalizeSoon(){ clearTimeout(eqT); eqT = setTimeout(()=>requestAnimationFrame(equalizeExRows), 30); }
+document.addEventListener("toggle", e=>{ if (e.target && e.target.classList && e.target.classList.contains("day")) equalizeSoon(); }, true);
+window.addEventListener("resize", equalizeSoon);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(equalizeSoon).catch(()=>{});
 function toggleGuide(btn){
   const k = btn.dataset.how, panel = btn.closest("li").querySelector(".ex-guide"); if (!panel) return;
   const open = !guideOpen.has(k);
@@ -1877,7 +1893,7 @@ function renderMission(){
   const preview = scoreDay(t, d); let pv = preview.L.reduce((a,x)=>a+x[1], 0);
   if (preview.win) pv += Math.min(S.streak+1, 10)*2;
 
-  const exH = p.ex.map((e,i)=>`<li>${hasHow(e[0]) ? '<div class="ex-line">' : ""}<label class="row" for="ex${i}"><input class="sr" type="checkbox" id="ex${i}" data-ex="${i}"${d.ex.includes(i) ? " checked" : ""}><span class="tick" aria-hidden="true"></span><span class="t"><b>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}</b>${e[2] ? `<small>${esc(e[2])}</small>` : ""}</span></label>${hasHow(e[0]) ? howBtn("m" + i, e[0]) + "</div>" + howPanel("m" + i, e[0]) : ""}</li>`).join("") || `<li class="note" style="padding:12px 0">Este día no tiene ejercicios. Agrégalos en Plan → Editar mi rutina.</li>`;
+  const exH = p.ex.map((e,i)=>`<li><div class="ex-line"><label class="row" for="ex${i}"><input class="sr" type="checkbox" id="ex${i}" data-ex="${i}"${d.ex.includes(i) ? " checked" : ""}><span class="tick" aria-hidden="true"></span><span class="t"><b>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}</b>${e[2] ? `<small>${esc(e[2])}</small>` : ""}</span></label>${hasHow(e[0]) ? howBtn("m" + i, e[0]) : ""}</div>${hasHow(e[0]) ? howPanel("m" + i, e[0]) : ""}</li>`).join("") || `<li class="note" style="padding:12px 0">Este día no tiene ejercicios. Agrégalos en Plan → Editar mi rutina.</li>`;
 
   const wOn = !!d.w;
   const rows = [`<li><button type="button" class="row" data-k="w" aria-pressed="${wOn}"><span class="tick" aria-hidden="true"></span><span class="t"><b>${rest ? "Descanso activo cumplido" : "Entrenamiento completado"}</b><small>Se marca solo al tachar el 80 % de la lista</small></span><span class="v num">${rest ? "+20" : (wOn ? "+40" : "−50")}</span></button></li>`];
@@ -1908,6 +1924,7 @@ function renderMission(){
     <button type="button" class="cta" id="closeBtn">Cerrar día y registrar</button>
     <p class="note">Marca lo que vayas cumpliendo y cierra el día en la noche. Si no lo cierras, mañana se cierra solo con lo que marcaste, y si no marcaste nada cuenta como ausencia.</p>`;
   prefetchGuides(p.ex);
+  equalizeSoon();
 }
 
 /* ---------- Racha y calendario ---------- */
@@ -2050,8 +2067,9 @@ function renderPlan(){
   $("planList").innerHTML = WEEK_ORDER.map(k=>{
     const p = planDay(k);
     return `<details class="day${k === wdT ? " is-today" : ""}"${k === wdT ? " open" : ""}><summary><span class="dname">${DAYN[k]}</span><span class="dt"><b>${esc(p.title)}</b><span>${p.rep ? esc(p.rep) + " · " : ""}${esc(p.tag || TYPE_LBL[p.type])}</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
-      <ol>${p.ex.length ? p.ex.map((e,i)=>hasHow(e[0]) ? `<li><div class="ex-line2"><span>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}${e[2] ? `<small>${esc(e[2])}</small>` : ""}</span>${howBtn("p" + k + "-" + i, e[0])}</div>${howPanel("p" + k + "-" + i, e[0])}</li>` : `<li>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}${e[2] ? `<small>${esc(e[2])}</small>` : ""}</li>`).join("") : `<li class="muted">Sin ejercicios</li>`}</ol></details>`;
+      <ol>${p.ex.length ? p.ex.map((e,i)=>`<li><div class="ex-line2"><span>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}${e[2] ? `<small>${esc(e[2])}</small>` : ""}</span>${hasHow(e[0]) ? howBtn("p" + k + "-" + i, e[0]) : ""}</div>${hasHow(e[0]) ? howPanel("p" + k + "-" + i, e[0]) : ""}</li>`).join("") : `<li class="muted">Sin ejercicios</li>`}</ol></details>`;
   }).join("");
+  equalizeSoon();
 }
 
 function renderPlanEditor(){
