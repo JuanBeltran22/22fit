@@ -424,6 +424,35 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translate(-50%,-170%);z-index:50;background:var(--fg);color:#000;border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;transition:transform .35s;white-space:nowrap}
 .toast.show{transform:translate(-50%,0)}
+/* Guía de cada ejercicio: dibujo que se mueve, músculos que trabaja y pasos */
+.ex-line{display:flex;align-items:flex-start;gap:10px}
+.ex-line > .row{flex:1;min-width:0}
+.ex-line2{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.ex-line2 > span{min-width:0}
+.ex-how{flex:0 0 auto;width:30px;height:30px;margin-top:9px;border-radius:50%;border:1px solid var(--line2);color:var(--fg2);display:grid;place-items:center}
+.ex-line2 .ex-how{margin-top:-4px}
+.ex-how svg{width:11px;height:11px;margin-left:2px}
+.ex-how[aria-expanded="true"]{border-color:var(--pos);color:var(--pos);background:var(--pos-dim)}
+.ex-guide{padding:4px 0 18px}
+.exg-top{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:center}
+.exg-anim{position:relative;height:200px;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.exg-anim img{position:absolute;inset:8px;width:calc(100% - 16px);height:calc(100% - 16px);object-fit:contain;filter:invert(1)}
+.exg-anim img + img{animation:exgFlip 2.6s ease-in-out infinite}
+@keyframes exgFlip{0%,38%{opacity:0}50%,88%{opacity:1}100%{opacity:0}}
+.exg-map svg{width:100%;height:auto;display:block}
+.exg-fb{display:flex;justify-content:space-around;font-size:10.5px;color:var(--muted);margin-top:2px}
+.exg-legend{display:grid;gap:4px;margin-top:8px;font-size:12px;color:var(--fg2);line-height:1.35}
+.exg-legend span{display:flex;gap:6px;align-items:baseline}
+.exg-legend i{flex:0 0 auto;width:9px;height:9px;border-radius:2px;background:var(--pos)}
+.exg-legend i.k2{background:rgba(69,212,131,.38)}
+.exg-note{margin-top:12px}
+.exg-steps{margin:12px 0 0;padding-left:20px;display:grid;gap:6px;font-size:14px;color:var(--fg2)}
+.exg-tip{margin:10px 0 0;font-size:13.5px;color:var(--fg2)}
+.exg-tip b{color:var(--warn)}
+.exg-yt{display:inline-block;margin-top:12px;font-size:13.5px;color:var(--fg);text-decoration:underline;text-underline-offset:3px}
+.exg-cred{margin:10px 0 0;font-size:11px;color:var(--muted);opacity:.7}
+.exg-cred a{color:inherit}
+@media (prefers-reduced-motion: reduce){.exg-anim{display:grid;grid-template-columns:1fr 1fr}.exg-anim img{position:static;width:100%;height:100%}}
 /* Perfil: avatar, nombre, guías plegables */
 .hdr-right{display:flex;align-items:center;gap:14px}
 .hdr-av{display:grid;place-items:center;padding:0;border-radius:50%}
@@ -1721,6 +1750,178 @@ function draftToday(){
   return d;
 }
 
+/* ---------- Guía de cada ejercicio ---------- */
+// Dibujos: Everkinetic (CC BY-SA 4.0), en ejercicios/<id>-1.svg (inicio) y -2.svg (final).
+// Mapa muscular: polígonos de react-body-highlighter (MIT). f = de frente, b = de espalda.
+const BODY = {"f":[["chest","518 416 510 551 580 580 678 555 706 473 620 416","298 465 314 555 408 580 482 551 478 420 376 420"],["obliques","686 633 673 571 588 596 600 641 604 833 657 788 665 698","339 784 331 718 310 633 322 571 408 592 392 633 392 837"],["abs","563 592 580 641 584 780 584 927 563 984 551 1041 514 1078 510 845 506 673 510 571","437 588 486 571 490 673 486 845 482 1073 445 1037 408 914 408 784 412 645"],["biceps","167 682 180 714 229 661 290 539 278 494 204 559","714 494 702 547 763 661 816 718 829 690 788 555"],["triceps","694 555 694 616 759 727 776 702 755 673","224 694 298 555 298 608 229 731"],["neck","555 237 506 335 506 392 616 400 706 449 694 367 633 351 584 306","290 449 302 371 363 351 412 302 445 245 490 339 486 392 380 396"],["front-deltoids","784 531 796 478 792 412 759 380 710 363 722 429 714 473","282 473 212 531 200 478 204 408 245 371 286 371 269 433"],["head","424 29 400 118 420 196 461 233 498 253 547 224 576 192 592 102 571 24 498 0"],["abductors","527 1102 543 1249 600 1102 620 1000 649 943 600 927 567 1045","478 1106 449 1253 420 1159 404 1131 396 1073 380 1024 347 939 396 922 416 992 437 1053"],["quadriceps","347 988 371 1082 371 1278 343 1371 310 1327 294 1200 282 1114 294 1008 322 947","633 1057 645 1000 669 947 702 1012 710 1118 682 1331 653 1376 624 1286 620 1114","388 1294 384 1122 412 1184 445 1294 429 1351 400 1461 363 1465 355 1400","596 1457 555 1290 608 1139 612 1302 641 1396 629 1465","327 1384 265 1457 257 1367 257 1273 269 1143 294 1335","718 1131 739 1241 739 1404 727 1457 665 1384 702 1335"],["knees","339 1400 347 1433 355 1473 363 1510 351 1567 298 1567 273 1527 273 1473 302 1441","657 1400 722 1478 722 1522 698 1571 649 1567 629 1510"],["calves","714 1604 735 1535 767 1612 796 1678 784 1878 796 1955 747 1955","249 1947 278 1649 282 1604 261 1543 249 1576 224 1616 208 1678 220 1882 208 1955","727 1951 698 1592 653 1584 641 1624 641 1653 657 1771","355 1584 359 1624 359 1669 351 1722 351 1767 322 1820 306 1873 269 1947 273 1878 282 1804 286 1755 290 1698 298 1641 302 1588"],["forearm","61 886 102 751 147 702 163 743 192 735 45 976 0 1000","845 698 833 735 800 731 951 984 1000 1004 935 894 898 763","776 722 776 776 804 841 853 898 922 1012 947 996","69 1012 135 906 188 841 216 771 212 718 49 988"]],"b":[["head","506 0 460 9 409 55 404 128 451 200 557 200 591 136 596 47 557 13"],["trapezius","447 217 477 217 472 383 477 647 383 532 353 409 311 366 391 332 438 272","523 217 557 217 566 272 609 328 689 366 647 404 617 532 523 647 532 383"],["back-deltoids","294 370 230 391 174 443 183 536 243 494 272 464","711 370 783 396 826 447 817 536 749 489 723 451"],["upper-back","311 387 281 489 285 553 340 753 472 711 472 664 366 540 336 413","689 387 719 494 715 562 660 753 528 711 528 664 634 545 664 417"],["triceps","268 498 179 557 145 723 166 817 217 638 268 557","736 502 821 557 860 732 834 821 779 630 732 557","268 583 268 685 230 753 191 774 226 655","728 583 770 647 804 774 766 753 728 689"],["lower-back","477 728 345 770 353 834 494 1021 468 830","523 728 655 770 647 834 506 1021 532 838"],["forearm","864 757 911 834 932 940 1000 1064 962 1043 881 894 843 838","136 757 89 838 68 936 0 1064 38 1043 123 885 157 830","813 796 774 779 791 847 911 1038 932 1089 945 1047","187 796 221 779 209 843 94 1030 68 1085 51 1047"],["gluteal","447 996 302 1085 298 1187 315 1260 472 1213 494 1149","553 991 511 1145 523 1209 681 1260 698 1191 694 1085"],["adductor","481 1230 447 1230 413 1255 451 1443 485 1357 489 1294","519 1226 557 1234 591 1260 549 1443 519 1362 511 1294"],["hamstring","289 1221 311 1294 366 1260 353 1353 345 1502 294 1583 289 1468 277 1413 272 1315","715 1217 694 1289 638 1260 655 1366 664 1502 711 1583 715 1477 728 1421 736 1319","387 1255 443 1460 404 1668 362 1528 370 1353","617 1255 634 1362 643 1532 600 1668 562 1464"],["knees","345 1532 311 1591 336 1664 374 1626","664 1536 630 1630 668 1664 694 1591"],["calves","294 1604 285 1672 247 1796 238 1928 255 1970 285 1932 298 1800 319 1711 319 1668","374 1651 353 1677 332 1719 311 1804 302 1919 340 2000 387 1906 391 1689","630 1651 613 1685 617 1906 664 1996 706 1919 689 1796 668 1702","706 1604 723 1685 757 1791 766 1928 745 1966 723 1936 706 1796 681 1681"],["calves","285 1957 302 1957 336 2017 306 2200 285 2136 268 1983"],["calves","698 1957 719 1957 736 1983 719 2132 702 2196 672 2021"]]};
+const MUS = {chest:"Pecho", "front-deltoids":"Hombro", "back-deltoids":"Hombro posterior", triceps:"Tríceps", biceps:"Bíceps", forearm:"Antebrazo", abs:"Abdomen", obliques:"Oblicuos", trapezius:"Trapecio", "upper-back":"Espalda (dorsales)", "lower-back":"Espalda baja", gluteal:"Glúteos", quadriceps:"Cuádriceps", hamstring:"Femoral", calves:"Pantorrillas", adductor:"Aductores", abductors:"Abductores", neck:"Cuello"};
+// i: dibujo · m: músculos principales · s: secundarios · p: pasos · t: error común · n: nota sobre el dibujo · ml: texto de los principales
+const GUIDES = {
+  press_plano: {i:"0042", m:["chest"], s:["triceps","front-deltoids"],
+    p:["Acuéstate en el banco con los ojos bajo la barra y los pies firmes en el piso.","Agarra la barra un poco más abierto que tus hombros, saca el pecho y junta las escápulas.","Baja controlado hasta rozar la parte baja del pecho y empuja hacia arriba sin bloquear los codos."],
+    t:"No rebotes la barra en el pecho ni despegues la cadera del banco."},
+  press_inclinado: {i:"0043", m:["chest"], s:["front-deltoids","triceps"], ml:"Pecho (parte alta)",
+    p:["Pon el banco a unos 30° y acuéstate con la espalda bien apoyada.","Agarra la barra (o las mancuernas) un poco más abierto que los hombros.","Baja hasta la parte alta del pecho y empuja hacia arriba."],
+    t:"Con el banco muy parado (más de 45°) trabaja más el hombro que el pecho."},
+  press_declinado: {i:"0051", m:["chest"], s:["triceps","front-deltoids"], ml:"Pecho (parte baja)",
+    p:["Asegura los pies en el soporte y acuéstate en el banco declinado.","Toma la barra a lo ancho de los hombros o un poco más.","Baja controlado hasta la parte baja del pecho y empuja de vuelta."],
+    t:"Pide ayuda para sacar y guardar la barra: en esta posición es más difícil."},
+  press_mancuernas: {i:"0055", m:["chest"], s:["triceps","front-deltoids"],
+    p:["Acuéstate en el banco con una mancuerna en cada mano a la altura del pecho.","Empuja las mancuernas hacia arriba hasta casi juntarlas.","Baja despacio hasta sentir el estiramiento en el pecho."],
+    t:"Los codos no van pegados al cuerpo ni totalmente abiertos: a unos 45°."},
+  peck_deck: {i:"0056", m:["chest"], s:["front-deltoids"], n:"El dibujo muestra aperturas con mancuernas: en la máquina es el mismo movimiento.",
+    p:["Ajusta el asiento para que los agarres queden a la altura del pecho.","Con los codos un poco doblados, junta los brazos al frente en un arco.","Aprieta 1 segundo al cerrar y vuelve despacio hasta sentir el estiramiento."],
+    t:"No dejes que el peso te lleve los brazos hacia atrás de golpe."},
+  aperturas: {i:"0056", m:["chest"], s:["front-deltoids"],
+    p:["Acuéstate en el banco con las mancuernas arriba y los codos un poco doblados.","Abre los brazos en arco hasta sentir el estiramiento en el pecho.","Vuelve a cerrar por el mismo arco, como si abrazaras un árbol."],
+    t:"Usa menos peso que en el press: aquí los codos casi no se doblan."},
+  press_militar: {i:"0004", m:["front-deltoids"], s:["triceps","trapezius"],
+    p:["Siéntate con la espalda apoyada (o de pie con el abdomen firme) y la barra a la altura de la clavícula.","Empuja la barra hacia arriba hasta estirar los brazos sobre la cabeza.","Baja controlado hasta la clavícula."],
+    t:"No arquees la espalda baja para subir más peso."},
+  vuelos_laterales: {i:"0018", m:["front-deltoids","back-deltoids"], s:["trapezius"], ml:"Hombro (parte lateral)",
+    p:["De pie, con una mancuerna en cada mano a los lados y los codos un poco doblados.","Sube los brazos hacia los lados hasta la altura de los hombros.","Baja despacio, sin dejar caer el peso."],
+    t:"Poco peso y sin balancear el cuerpo; los hombros no suben hacia las orejas."},
+  elev_frontales: {i:"0033", m:["front-deltoids"], s:["chest"],
+    p:["De pie, con las mancuernas frente a los muslos.","Sube un brazo (o los dos) al frente hasta la altura de los hombros.","Baja despacio y repite."],
+    t:"Sin impulso: si tienes que balancearte, baja el peso."},
+  rompecraneos: {i:"0183", m:["triceps"], s:["forearm"],
+    p:["Acuéstate en el banco con la barra sobre el pecho y los brazos estirados.","Dobla solo los codos para bajar la barra hacia la frente.","Estira los brazos de vuelta sin mover los codos."],
+    t:"Los codos apuntan al techo todo el tiempo; si se abren, baja el peso."},
+  triceps_polea: {i:"0205", m:["triceps"], s:["forearm"],
+    p:["De pie frente a la polea alta, agarra la barra o la cuerda con los codos pegados al cuerpo.","Empuja hacia abajo hasta estirar los brazos por completo.","Sube despacio hasta que los antebrazos queden paralelos al piso."],
+    t:"Solo se mueven los antebrazos: no te inclines encima del peso."},
+  fondos: {i:"0054", m:["chest","triceps"], s:["front-deltoids"],
+    p:["Sujétate en las barras paralelas con los brazos estirados.","Baja doblando los codos, con el torso un poco inclinado al frente.","Sube empujando hasta estirar los brazos."],
+    t:"No bajes tanto que los hombros duelan: hasta que los brazos queden paralelos al piso."},
+  flexiones: {i:"0077", m:["chest"], s:["triceps","front-deltoids","abs"],
+    p:["Manos en el piso un poco más abiertas que los hombros y el cuerpo recto.","Baja el pecho hasta casi tocar el piso.","Empuja de vuelta sin dejar caer la cadera."],
+    t:"Si no puedes con el cuerpo recto, apoya las rodillas."},
+  jalon_abierto: {i:"0093", m:["upper-back"], s:["biceps","back-deltoids","forearm"], n:"El dibujo es de la misma máquina; tú agarra la barra más abierto que los hombros.",
+    p:["Siéntate con los muslos bajo el soporte y agarra la barra bien abierta.","Saca el pecho y lleva la barra a la parte alta del pecho, con los codos hacia las costillas.","Sube controlado hasta estirar los brazos por completo."],
+    t:"No tires con impulso echándote hacia atrás: el torso casi no se mueve."},
+  jalon_cerrado: {i:"0096", m:["upper-back"], s:["biceps","forearm"],
+    p:["Pon el agarre en V y siéntate con los muslos bajo el soporte.","Lleva el agarre hacia el pecho bajando los codos pegados al cuerpo.","Sube despacio hasta estirar completo arriba."],
+    t:"Piensa en bajar los codos, no en tirar con las manos."},
+  dominadas: {i:"0087", m:["upper-back"], s:["biceps","forearm","back-deltoids"],
+    p:["Cuélgate de la barra con las manos un poco más abiertas que los hombros.","Sube llevando el pecho hacia la barra hasta pasar la barbilla.","Baja despacio hasta estirar los brazos."],
+    t:"Si aún no te salen, empieza con banda elástica o con el jalón al pecho."},
+  remo_t: {i:"0029", m:["upper-back"], s:["biceps","back-deltoids","lower-back"],
+    p:["Párate en la máquina con las rodillas un poco dobladas y el torso inclinado.","Con la espalda recta, tira del agarre hacia el abdomen.","Junta las escápulas arriba y baja controlado."],
+    t:"Nunca redondees la espalda baja; si no puedes mantenerla recta, baja peso."},
+  remo_barra: {i:"0026", m:["upper-back"], s:["biceps","back-deltoids","lower-back"],
+    p:["De pie, inclina el torso al frente con la espalda recta y las rodillas un poco dobladas.","Tira de la barra hacia el abdomen llevando los codos atrás.","Baja controlado hasta estirar los brazos."],
+    t:"La espalda no se redondea y el torso no sube y baja con cada repetición."},
+  hiperextensiones: {i:"0103", m:["lower-back"], s:["gluteal","hamstring"],
+    p:["Ajusta el banco romano para que la cadera quede justo en el borde del soporte.","Con los brazos cruzados en el pecho, baja el torso despacio.","Sube hasta quedar en línea recta con las piernas."],
+    t:"No subas más allá de recto ni lo hagas con impulso."},
+  curl_arana: {i:"0225", m:["biceps"], s:["forearm"],
+    p:["Acuéstate boca abajo en un banco inclinado, con los brazos colgando.","Sube las mancuernas doblando solo los codos.","Aprieta arriba y baja despacio hasta estirar."],
+    t:"El pecho se queda pegado al banco: así no hay forma de hacer trampa con el cuerpo."},
+  curl_martillo: {i:"0227", m:["biceps","forearm"], s:[],
+    p:["De pie, con una mancuerna en cada mano y las palmas mirándose entre sí.","Sube las mancuernas doblando los codos, sin girar las muñecas.","Baja despacio hasta estirar los brazos."],
+    t:"Los codos se quedan pegados a los costados."},
+  curl_barra: {i:"0250", m:["biceps"], s:["forearm"],
+    p:["De pie, con la barra agarrada por debajo al ancho de los hombros.","Sube la barra doblando los codos hasta la altura del pecho.","Baja despacio hasta estirar los brazos."],
+    t:"No eches el cuerpo hacia atrás para subir la barra."},
+  encogimientos: {i:"0030", m:["trapezius"], s:["forearm"],
+    p:["De pie, con la barra o las mancuernas colgando frente a ti.","Sube los hombros hacia las orejas lo más alto que puedas.","Haz una pausa arriba y baja despacio."],
+    t:"Solo suben y bajan los hombros: no gires ni dobles los brazos."},
+  abdomen_piernas: {i:"0021", m:["abs"], s:["obliques"], n:"El dibujo es en banco; colgado de la barra el movimiento es el mismo.",
+    p:["Cuélgate de la barra con los brazos estirados, sin balancearte.","Sube las piernas (o las rodillas) hasta la altura de la cadera apretando el abdomen, y baja despacio.","Luego el crunch en polea: de rodillas frente a la polea, lleva los codos hacia los muslos."],
+    t:"Nada de impulso: si te balanceas, sube las rodillas dobladas."},
+  abdomen_rueda: {i:"0286", m:["abs"], s:["lower-back","front-deltoids","obliques"],
+    p:["Plancha: antebrazos y puntas de los pies en el piso, el cuerpo recto como una tabla, 45 segundos.","Rueda: de rodillas, con la rueda bajo los hombros, ruédala al frente estirando el cuerpo.","Vuelve apretando el abdomen, sin arquear la espalda baja."],
+    t:"Si la espalda baja se hunde, acorta el recorrido."},
+  sentadilla: {i:"0122", m:["quadriceps","gluteal"], s:["hamstring","lower-back","adductor"],
+    p:["Pon la barra sobre la parte alta de la espalda y los pies al ancho de los hombros.","Baja sentándote hacia atrás, con el pecho arriba, hasta al menos el paralelo.","Sube empujando el piso con todo el pie."],
+    t:"Las rodillas siguen la dirección de los pies; no dejes que se vayan hacia adentro."},
+  prensa: {i:"0127", m:["quadriceps"], s:["gluteal","hamstring"],
+    p:["Siéntate con la espalda apoyada y los pies en la plataforma, al ancho de los hombros.","Suelta los seguros y baja la plataforma doblando las rodillas.","Empuja de vuelta sin bloquear las rodillas arriba."],
+    t:"La cadera no se despega del asiento al bajar."},
+  rumano: {i:"0118", m:["hamstring"], s:["gluteal","lower-back"],
+    p:["De pie con la barra frente a los muslos y las rodillas un poco dobladas.","Lleva la cadera hacia atrás y baja la barra pegada a las piernas, con la espalda recta.","Cuando sientas el estiramiento en el femoral, sube apretando los glúteos."],
+    t:"La barra no se separa de las piernas y la espalda nunca se redondea."},
+  peso_muerto: {i:"0099", m:["lower-back","hamstring","gluteal"], s:["quadriceps","trapezius","forearm"],
+    p:["Pies al ancho de la cadera con la barra sobre la mitad del pie; agárrala justo por fuera de las piernas.","Con la espalda recta y el pecho arriba, sube empujando el piso hasta quedar de pie.","Baja la barra pegada a las piernas, llevando la cadera atrás."],
+    t:"Si la espalda se redondea, el peso es demasiado."},
+  zancadas: {i:"0121", m:["quadriceps","gluteal"], s:["hamstring","calves"],
+    p:["De pie con una mancuerna en cada mano.","Da un paso largo al frente y baja hasta que la rodilla de atrás casi toque el piso.","Empuja con la pierna de adelante y da el siguiente paso con la otra."],
+    t:"La rodilla de adelante no se pasa mucho de la punta del pie."},
+  curl_femoral: {i:"0117", m:["hamstring"], s:["calves"],
+    p:["Acuéstate boca abajo con el rodillo justo encima de los talones.","Dobla las rodillas llevando los talones hacia los glúteos.","Haz una pausa de 1 segundo arriba y baja despacio."],
+    t:"La cadera se queda pegada al banco."},
+  ext_cuadriceps: {i:"0142", m:["quadriceps"], s:[],
+    p:["Siéntate con la espalda apoyada y el rodillo sobre los tobillos.","Estira las piernas hasta quedar rectas.","Baja en 2 o 3 segundos, sin dejar caer el peso."],
+    t:"Agárrate de las manijas para no levantar la cadera."},
+  pantorrilla: {i:"0282", m:["calves"], s:[],
+    p:["Pon las puntas de los pies en el borde del escalón o de la plataforma.","Baja los talones hasta sentir el estiramiento y haz una pausa.","Sube lo más alto que puedas en las puntas de los pies."],
+    t:"Recorrido completo y lento: sin rebotar abajo."}
+};
+// Nombre del ejercicio → guía. El orden importa: lo más específico va primero.
+const GUIDE_MATCH = [
+  [/inclinad/, "press_inclinado", /press|banca|pecho/], [/declinad/, "press_declinado"],
+  [/militar|press (de )?hombro|shoulder press|overhead|arnold/, "press_militar"],
+  [/peck|pec deck|contractor|mariposa|butterfly/, "peck_deck"], [/apertura|\bfly|cruce de polea|crossover/, "aperturas"],
+  [/press .*mancuerna|mancuerna.* press/, "press_mancuernas"], [/press (plano|de banca|banca)|bench|press (de )?pecho/, "press_plano"],
+  [/(vuelo|elevacion|elevaciones|vuelos)s? laterale?s?/, "vuelos_laterales"], [/(elevacion|elevaciones|vuelo)s? frontale?s?/, "elev_frontales"],
+  [/rompecraneo|skull|frances/, "rompecraneos"], [/fondo|\bdips?\b/, "fondos"], [/flexion|lagartija|push ?up/, "flexiones"], [/tricep/, "triceps_polea"],
+  [/jalon.*(cerrad|en v|estrech)/, "jalon_cerrado"], [/jalon|pulldown|polea al pecho/, "jalon_abierto"],
+  [/dominada|pull ?up|chin ?up/, "dominadas"], [/remo (en|con) t\b|remo t\b|t-bar/, "remo_t"], [/remo/, "remo_barra"],
+  [/hiperextension|extension de espalda|espalda baja|lumbar/, "hiperextensiones"],
+  [/arana|spider/, "curl_arana"], [/martillo|hammer/, "curl_martillo"], [/femoral|leg curl/, "curl_femoral"], [/curl/, "curl_barra"],
+  [/encogimiento|shrug/, "encogimientos"],
+  [/rumano|romanian|piernas? rigida/, "rumano"], [/peso muerto|deadlift/, "peso_muerto"],
+  [/pantorrilla|gemelo|calf/, "pantorrilla"], [/sentadilla|squat/, "sentadilla"], [/prensa|leg press/, "prensa"],
+  [/zancada|estocada|lunge|desplante/, "zancadas"], [/cuadricep|leg extension|extension de pierna/, "ext_cuadriceps"],
+  [/rueda|rollout|plancha|plank/, "abdomen_rueda"], [/elevacion de piernas|piernas colgad|leg raise|crunch|abdom/, "abdomen_piernas"]
+];
+const NO_HOW = /cardio|caminata|bici|trote|correr|eliptica|estiramiento|movilidad|preparar|comidas|descanso/;
+function normEx(s){ return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+function hasHow(name){ return !NO_HOW.test(normEx(name)); }
+function guideFor(name){
+  const n = normEx(name);
+  for (const [re, k, also] of GUIDE_MATCH) if (re.test(n) && (!also || also.test(n))) return GUIDES[k];
+  return null;
+}
+function bodySvg(main, sec){
+  const fill = m => main.includes(m) ? "var(--pos)" : (sec.includes(m) ? "rgba(69,212,131,.38)" : (m === "head" || m === "knees" ? "#1b1b1b" : "#2c2c2c"));
+  const draw = list => list.map(([m, ...pts]) => pts.map(p => '<polygon points="' + p + '" fill="' + fill(m) + '"/>').join("")).join("");
+  return '<svg viewBox="0 0 2060 2220" aria-hidden="true"><g>' + draw(BODY.f) + '</g><g transform="translate(1060 0)">' + draw(BODY.b) + '</g></svg>';
+}
+const ICON_PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path fill="currentColor" d="M2 1.2v9.6L10.4 6z"/></svg>';
+const guideOpen = new Set();   // guías abiertas, para que sigan abiertas cuando la pantalla se redibuja
+function guideHtml(name){
+  const g = guideFor(name);
+  const yt = "https://www.youtube.com/results?search_query=" + encodeURIComponent(name + " técnica correcta");
+  const ytLink = '<a class="exg-yt" href="' + yt + '" target="_blank" rel="noopener">Ver videos en YouTube</a>';
+  if (!g) return '<p class="note" style="margin-top:0">Todavía no tengo el dibujo de este ejercicio.</p>' + ytLink;
+  const main = g.ml || g.m.map(x=>MUS[x]).join(", "), sec = g.s.map(x=>MUS[x]).join(", ");
+  return '<div class="exg-top">' +
+      '<div class="exg-anim"><img src="ejercicios/' + g.i + '-1.svg" alt="Posición inicial" decoding="async"><img src="ejercicios/' + g.i + '-2.svg" alt="Posición final" decoding="async"></div>' +
+      '<div class="exg-map">' + bodySvg(g.m, g.s) + '<div class="exg-fb"><span>Frente</span><span>Espalda</span></div>' +
+        '<div class="exg-legend"><span><i></i>' + esc(main) + '</span>' + (sec ? '<span><i class="k2"></i>' + esc(sec) + '</span>' : "") + '</div></div>' +
+    '</div>' +
+    (g.n ? '<p class="note exg-note">' + esc(g.n) + '</p>' : "") +
+    '<ol class="exg-steps">' + g.p.map(t => '<li>' + esc(t) + '</li>').join("") + '</ol>' +
+    '<p class="exg-tip"><b>Ojo:</b> ' + esc(g.t) + '</p>' + ytLink +
+    '<p class="exg-cred">Dibujo: <a href="https://github.com/everkinetic/data" target="_blank" rel="noopener">Everkinetic</a> (CC BY-SA 4.0) · Mapa muscular: <a href="https://github.com/giavinh79/react-body-highlighter" target="_blank" rel="noopener">react-body-highlighter</a> (MIT)</p>';
+}
+function howBtn(key, name){
+  return '<button type="button" class="ex-how" data-how="' + key + '" data-name="' + esc(name) + '" aria-expanded="' + guideOpen.has(key) + '" aria-label="Cómo se hace: ' + esc(name) + '">' + ICON_PLAY + '</button>';
+}
+function howPanel(key, name){
+  const open = guideOpen.has(key);
+  return '<div class="ex-guide"' + (open ? "" : " hidden") + '>' + (open ? guideHtml(name) : "") + '</div>';
+}
+function toggleGuide(btn){
+  const k = btn.dataset.how, panel = btn.closest("li").querySelector(".ex-guide"); if (!panel) return;
+  const open = !guideOpen.has(k);
+  if (open) guideOpen.add(k); else guideOpen.delete(k);
+  btn.setAttribute("aria-expanded", String(open));
+  panel.innerHTML = open ? guideHtml(btn.dataset.name) : "";
+  panel.hidden = !open;
+}
+
 function renderMission(){
   const t = today(); const p = planDay(wday(t)); const log = S.logs[t];
   $("missionHead").textContent = "Hoy · " + DAYFULL[wday(t)];
@@ -1735,7 +1936,7 @@ function renderMission(){
   const preview = scoreDay(t, d); let pv = preview.L.reduce((a,x)=>a+x[1], 0);
   if (preview.win) pv += Math.min(S.streak+1, 10)*2;
 
-  const exH = p.ex.map((e,i)=>`<li><label class="row" for="ex${i}"><input class="sr" type="checkbox" id="ex${i}" data-ex="${i}"${d.ex.includes(i) ? " checked" : ""}><span class="tick" aria-hidden="true"></span><span class="t"><b>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}</b>${e[2] ? `<small>${esc(e[2])}</small>` : ""}</span></label></li>`).join("") || `<li class="note" style="padding:12px 0">Este día no tiene ejercicios. Agrégalos en Plan → Editar mi rutina.</li>`;
+  const exH = p.ex.map((e,i)=>`<li>${hasHow(e[0]) ? '<div class="ex-line">' : ""}<label class="row" for="ex${i}"><input class="sr" type="checkbox" id="ex${i}" data-ex="${i}"${d.ex.includes(i) ? " checked" : ""}><span class="tick" aria-hidden="true"></span><span class="t"><b>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}</b>${e[2] ? `<small>${esc(e[2])}</small>` : ""}</span></label>${hasHow(e[0]) ? howBtn("m" + i, e[0]) + "</div>" + howPanel("m" + i, e[0]) : ""}</li>`).join("") || `<li class="note" style="padding:12px 0">Este día no tiene ejercicios. Agrégalos en Plan → Editar mi rutina.</li>`;
 
   const wOn = !!d.w;
   const rows = [`<li><button type="button" class="row" data-k="w" aria-pressed="${wOn}"><span class="tick" aria-hidden="true"></span><span class="t"><b>${rest ? "Descanso activo cumplido" : "Entrenamiento completado"}</b><small>Se marca solo al tachar el 80 % de la lista</small></span><span class="v num">${rest ? "+20" : (wOn ? "+40" : "−50")}</span></button></li>`];
@@ -1907,7 +2108,7 @@ function renderPlan(){
   $("planList").innerHTML = WEEK_ORDER.map(k=>{
     const p = planDay(k);
     return `<details class="day${k === wdT ? " is-today" : ""}"${k === wdT ? " open" : ""}><summary><span class="dname">${DAYN[k]}</span><span class="dt"><b>${esc(p.title)}</b><span>${p.rep ? esc(p.rep) + " · " : ""}${esc(p.tag || TYPE_LBL[p.type])}</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
-      <ol>${p.ex.length ? p.ex.map(e=>`<li>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}${e[2] ? `<small>${esc(e[2])}</small>` : ""}</li>`).join("") : `<li class="muted">Sin ejercicios</li>`}</ol></details>`;
+      <ol>${p.ex.length ? p.ex.map((e,i)=>hasHow(e[0]) ? `<li><div class="ex-line2"><span>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}${e[2] ? `<small>${esc(e[2])}</small>` : ""}</span>${howBtn("p" + k + "-" + i, e[0])}</div>${howPanel("p" + k + "-" + i, e[0])}</li>` : `<li>${esc(e[0])}${e[1] ? `<em>${esc(e[1])}</em>` : ""}${e[2] ? `<small>${esc(e[2])}</small>` : ""}</li>`).join("") : `<li class="muted">Sin ejercicios</li>`}</ol></details>`;
   }).join("");
 }
 
@@ -2471,6 +2672,8 @@ document.addEventListener("error", e=>{
 }, true);
 
 document.addEventListener("click", e=>{
+  const hw = e.target.closest("[data-how]");
+  if (hw) { toggleGuide(hw); return; }
   const ac = e.target.closest("[data-acct]");
   if (ac) { acctAction(ac.dataset.acct); return; }
   const am = e.target.closest("[data-auth-mode]");
