@@ -434,7 +434,8 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 .ex-how svg{width:11px;height:11px;margin-left:2px}
 .ex-how[aria-expanded="true"]{border-color:var(--pos);color:var(--pos);background:var(--pos-dim)}
 .ex-guide{padding:4px 0 18px}
-.exg-top{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;align-items:center}
+/* Dos cuadros iguales: el movimiento a la izquierda y el cuerpo a la derecha; los músculos en una línea centrada debajo. */
+.exg-top{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .exg-anim{position:relative;aspect-ratio:1;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 /* Una sola imagen por ejercicio (ejercicios/NNNN.webp) con las dos posiciones lado a lado, ya en blanco sobre negro.
    Cada <img> es un cuadrado que muestra una mitad: f1 la inicial, f2 la final. */
@@ -445,10 +446,10 @@ table.pts td.pos{color:var(--pos)} table.pts td.neg{color:var(--neg)}
 .exg-anim.ok img.f2{animation:exgFlip 2s ease-in-out infinite}
 @keyframes exgFlip{0%,37.5%{opacity:0}50%,87.5%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion: reduce){.exg-anim.ok img.f2{animation:exgFlip 2s ease-in-out infinite!important}}
-.exg-map svg{width:100%;height:auto;display:block}
-.exg-fb{display:flex;justify-content:space-around;font-size:10.5px;color:var(--muted);margin-top:2px}
-.exg-legend{display:grid;gap:4px;margin-top:8px;font-size:12px;color:var(--fg2);line-height:1.35}
-.exg-legend span{display:flex;gap:6px;align-items:baseline}
+.exg-map{position:relative;aspect-ratio:1;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;place-items:center;padding:12px 8px}
+.exg-map svg{height:100%;width:auto;max-width:100%;display:block}
+.exg-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12.5px;color:var(--fg2);line-height:1.35;text-align:center}
+.exg-legend span{display:inline-flex;gap:6px;align-items:center}
 .exg-legend i{flex:0 0 auto;width:9px;height:9px;border-radius:2px;background:var(--pos)}
 .exg-legend i.k2{background:rgba(69,212,131,.38)}
 .exg-credits{margin-top:22px;font-size:12px}
@@ -1847,9 +1848,9 @@ function guideHtml(name){
   const main = g.ml || g.m.map(x=>MUS[x]).join(", "), sec = g.s.map(x=>MUS[x]).join(", ");
   return '<div class="exg-top">' +
       '<div class="exg-anim' + (guideReady.has(g.i) ? " ok" : "") + '" data-ex="' + g.i + '"><img class="f1" src="ejercicios/' + g.i + '.webp" alt="Posición inicial"><img class="f2" src="ejercicios/' + g.i + '.webp" alt="Posición final"></div>' +
-      '<div class="exg-map">' + bodySvg(g.m, g.s) + '<div class="exg-fb"><span>Frente</span><span>Espalda</span></div>' +
-        '<div class="exg-legend"><span><i></i>' + esc(main) + '</span>' + (sec ? '<span><i class="k2"></i>' + esc(sec) + '</span>' : "") + '</div></div>' +
-    '</div>';
+      '<div class="exg-map">' + bodySvg(g.m, g.s) + '</div>' +
+    '</div>' +
+    '<div class="exg-legend"><span><i></i>' + esc(main) + '</span>' + (sec ? '<span><i class="k2"></i>' + esc(sec) + '</span>' : "") + '</div>';
 }
 function howBtn(key, name){
   return '<button type="button" class="ex-how" data-how="' + key + '" data-name="' + esc(name) + '" aria-expanded="' + guideOpen.has(key) + '" aria-label="Cómo se hace: ' + esc(name) + '">' + ICON_PLAY + '</button>';
